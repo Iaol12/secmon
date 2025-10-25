@@ -29,6 +29,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip cache purge
 
 WORKDIR /var/www/html/secmon
+RUN mkdir /var/www/html/secmon/web
 
 # Copy application files for npm install
 COPY package.json package-lock.json* ./
