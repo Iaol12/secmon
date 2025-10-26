@@ -55,7 +55,11 @@ foreach ($columns as $col) {
     $tableColumns[$col] = $col;
 }
 
-// Register React bundle
+// Register React bundle (JS and CSS)
+$this->registerCssFile('@web/js/dist/dashboard-bundle.css', [
+    'depends' => 'yii\web\YiiAsset'
+]);
+
 $this->registerJsFile('@web/js/dist/dashboard-bundle.js', [
     'depends' => 'yii\web\YiiAsset',
     'position' => \yii\web\View::POS_END

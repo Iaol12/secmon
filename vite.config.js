@@ -14,7 +14,13 @@ export default defineConfig({
       output: {
         entryFileNames: 'dashboard-bundle.js',
         chunkFileNames: '[name]-[hash].js',
-        assetFileNames: '[name]-[hash].[ext]'
+        assetFileNames: (assetInfo) => {
+          // Keep CSS filename consistent for easy inclusion
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'dashboard-bundle.css';
+          }
+          return '[name]-[hash].[ext]';
+        }
       }
     },
     sourcemap: true

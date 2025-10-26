@@ -23,7 +23,17 @@ class DashboardAPI {
   async getRefreshTimes() {
     try {
       const response = await axios.get(this.urls.getRefreshTimes);
-      return JSON.parse(response.data);
+      // Axios already parses JSON, no need to parse again
+      // If response.data is a string, parse it; otherwise return as is
+      if (typeof response.data === 'string') {
+        try {
+          return JSON.parse(response.data);
+        } catch (e) {
+          console.warn('Could not parse refresh times as JSON:', response.data);
+          return {};
+        }
+      }
+      return response.data || {};
     } catch (error) {
       console.error('Error getting refresh times:', error);
       throw error;

@@ -74,25 +74,57 @@
 }
 
 .dashboard-select-container {
+  position: relative;
   background: white;
-  padding: 12px;
+  padding: 8px 16px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.dashboard-select-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.dashboard-select-container::before {
+  content: 'dashboard';
+  font-family: 'Material Icons';
+  font-size: 24px;
+  color: #039be5;
 }
 
 .dashboard-select {
-  padding: 8px 16px;
+  padding: 10px 36px 10px 12px;
   font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
+  font-weight: 500;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: #f5f5f5;
   cursor: pointer;
-  min-width: 200px;
+  min-width: 220px;
+  transition: all 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 20px;
+}
+
+.dashboard-select:hover {
+  background: #eeeeee;
+  border-color: #039be5;
 }
 
 .dashboard-select:focus {
   outline: none;
   border-color: #039be5;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(3, 155, 229, 0.1);
 }
 
 .dashboard-grid {
@@ -197,8 +229,15 @@
     width: 100%;
   }
 
+  .dashboard-select-container::before {
+    font-size: 20px;
+  }
+
   .dashboard-select {
     width: 100%;
+    min-width: unset;
+    font-size: 15px;
+    padding: 8px 32px 8px 10px;
   }
 
   .dashboard-actions {
