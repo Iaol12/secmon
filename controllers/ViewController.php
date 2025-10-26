@@ -28,6 +28,7 @@ class ViewController extends Controller
             ],
         ];
     }
+    public $layout = 'dashboardLayout';
 
     /**
      * Lists all View models.
