@@ -14,6 +14,7 @@ const initDashboard = () => {
 
   // Get configuration from window object (passed from PHP)
   const config = window.dashboardConfig || {};
+  console.log(config)
   const {
     views = [],
     activeViewId = null,
@@ -24,6 +25,7 @@ const initDashboard = () => {
   const root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
+      
       <Dashboard
         views={views}
         activeViewId={activeViewId}
