@@ -77,6 +77,9 @@ $dashboardConfig = [
         'updateComponentSettings' => Url::to(['filter/add-filter-to-component']),
         'deleteComponentSettings' => Url::to(['filter/remove-filter-from-component']),
         'updateComponentContent' => Url::to(['filter/get-component-content']),
+        'createView' => Url::to(['view/create']),
+        'updateView' => Url::to(['view/update', 'id' => $activeViewId]),
+        'deleteView' => Url::to(['view/delete', 'id' => $activeViewId]),
     ]
 ];
 
@@ -87,26 +90,6 @@ $this->registerJs(
 ?>
 
 <div class="view-index">
-    <!-- Main actions for dashboard management -->
-    <div class="main-actions centered-horizontal" style="margin-bottom: 20px;">
-        <?= Html::a("<i class='material-icons'>add_to_queue</i>" . Yii::t('app', 'Create View'), 
-            ['create'], 
-            ['class' => 'btn-floating waves-effect waves-light btn-large red']) ?>
-        <?= Html::a("<i class='material-icons'>edit</i>" . Yii::t('app', 'Update'), 
-            ['update', 'id' => $activeViewId], 
-            ['id' => 'editBtn', 'class' => 'btn-floating waves-effect waves-light btn-large blue']) ?>
-        <?= Html::a("<i class='material-icons'>delete</i>" . Yii::t('app', 'Delete'), 
-            ['delete', 'id' => $activeViewId],
-            [
-                'id' => 'removeBtn',
-                'class' => 'btn-floating waves-effect waves-light btn-large red',
-                'data' => [
-                    'confirm' => Yii::t('app', 'Are you sure you want to delete this dashboard?'),
-                    'method' => 'post',
-                ],
-            ]) ?>
-    </div>
-
     <!-- React Dashboard Root -->
     <div id="react-dashboard-root"></div>
 
@@ -118,22 +101,3 @@ $this->registerJs(
         </div>
     </noscript>
 </div>
-
-<?php
-// Update the edit button URL when view changes via JavaScript
-$this->registerJs("
-    // Listen for view changes from React
-    window.addEventListener('dashboardViewChanged', function(e) {
-        const viewId = e.detail.viewId;
-        const editBtn = document.getElementById('editBtn');
-        const removeBtn = document.getElementById('removeBtn');
-        
-        if (editBtn) {
-            editBtn.href = editBtn.href.replace(/id=\d+/, 'id=' + viewId);
-        }
-        if (removeBtn) {
-            removeBtn.href = removeBtn.href.replace(/id=\d+/, 'id=' + viewId);
-        }
-    });
-", \yii\web\View::POS_READY);
-?>

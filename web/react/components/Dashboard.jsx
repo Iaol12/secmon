@@ -165,6 +165,46 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
   const currentView = views.find(v => v.id === parseInt(currentViewId));
   const visibleComponents = components.filter(c => c.view_id === parseInt(currentViewId));
 
+  const handleCreateView = () => {
+    // Get URLs from window.dashboardConfig
+    const config = window.dashboardConfig || {};
+    const createUrl = config.urls?.createView || `/view/create`;
+    window.location.href = createUrl;
+  };
+
+  const handleUpdateView = () => {
+    const config = window.dashboardConfig || {};
+    const updateUrl = config.urls?.updateView || `/view/update?id=${currentViewId}`;
+    window.location.href = updateUrl;
+  };
+
+  const handleDeleteView = () => {
+    if (!confirm('Are you sure you want to delete this dashboard?')) {
+      return;
+    }
+    
+    const config = window.dashboardConfig || {};
+    const deleteUrl = config.urls?.deleteView || `/view/delete?id=${currentViewId}`;
+    
+    // Create a form to submit DELETE request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = deleteUrl;
+    
+    // Add CSRF token if available
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = '_csrf';
+      input.value = csrfToken;
+      form.appendChild(input);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -180,6 +220,35 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
               </option>
             ))}
           </select>
+        </div>
+        
+        <div className="dashboard-actions">
+          <button 
+            className="dashboard-action-btn create-btn"
+            onClick={handleCreateView}
+            title="Create View"
+          >
+            <i className="material-icons">add_to_queue</i>
+            <span>Create View</span>
+          </button>
+          
+          <button 
+            className="dashboard-action-btn update-btn"
+            onClick={handleUpdateView}
+            title="Update"
+          >
+            <i className="material-icons">edit</i>
+            <span>Update</span>
+          </button>
+          
+          <button 
+            className="dashboard-action-btn delete-btn"
+            onClick={handleDeleteView}
+            title="Delete"
+          >
+            <i className="material-icons">delete</i>
+            <span>Delete</span>
+          </button>
         </div>
       </div>
 

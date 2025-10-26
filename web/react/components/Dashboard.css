@@ -10,6 +10,67 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.dashboard-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  color: white;
+}
+
+.dashboard-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-action-btn i {
+  font-size: 20px;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+}
+
+.create-btn:hover {
+  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+}
+
+.update-btn {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+}
+
+.update-btn:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #f4511e 0%, #e64a19 100%);
 }
 
 .dashboard-select-container {
@@ -138,6 +199,26 @@
 
   .dashboard-select {
     width: 100%;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .dashboard-action-btn span {
+    display: none;
+  }
+
+  .dashboard-action-btn i {
+    font-size: 24px;
   }
 
   .add-widget-fab {
