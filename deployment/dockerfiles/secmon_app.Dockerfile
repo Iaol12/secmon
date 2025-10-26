@@ -18,12 +18,26 @@ RUN pip3 install numpy pandas psycopg2-binary minisom python-libnmap
 RUN pip3 install -U configparser
 RUN alias python="/usr/bin/python3"
 
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs
+
 # Cleanup
 RUN apt-get -y autoremove --purge
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip3 cache purge
 
 WORKDIR /var/www/html/secmon
+
+# Copy application files for npm install
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy rest of application
+COPY . .
+
+# Build React dashboard
+RUN npm run build
 
 # Copy apache config files
 COPY deployment/config_files/000-default.conf /etc/apache2/sites-available/
