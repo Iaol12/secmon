@@ -208,43 +208,49 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <div className="dashboard-select-container">
-          <select 
-            value={currentViewId} 
-            onChange={handleViewChange}
-            className="dashboard-select"
-          >
-            {views.map(view => (
-              <option key={view.id} value={view.id}>
-                {view.name}
-              </option>
-            ))}
-          </select>
+        <div className="header-left">
+          <div className="dashboard-select-container">
+            <label htmlFor="dashboard-selector" className="dashboard-select-label">
+              Dashboard:
+            </label>
+            <select 
+              id="dashboard-selector"
+              value={currentViewId} 
+              onChange={handleViewChange}
+              className="dashboard-select"
+            >
+              {views.map(view => (
+                <option key={view.id} value={view.id}>
+                  {view.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="dashboard-actions">
           <button 
             className="dashboard-action-btn create-btn"
             onClick={handleCreateView}
-            title="Create View"
+            title="Create New Dashboard"
           >
-            <i className="material-icons">add_to_queue</i>
-            <span>Create View</span>
+            <i className="material-icons">add</i>
+            <span>New</span>
           </button>
           
           <button 
             className="dashboard-action-btn update-btn"
             onClick={handleUpdateView}
-            title="Update"
+            title="Edit Dashboard"
           >
             <i className="material-icons">edit</i>
-            <span>Update</span>
+            <span>Edit</span>
           </button>
           
           <button 
             className="dashboard-action-btn delete-btn"
             onClick={handleDeleteView}
-            title="Delete"
+            title="Delete Dashboard"
           >
             <i className="material-icons">delete</i>
             <span>Delete</span>
