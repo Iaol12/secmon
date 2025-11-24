@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["react", "dashboard", "security"],
+  "keywords": [
+    "react",
+    "dashboard",
+    "security"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

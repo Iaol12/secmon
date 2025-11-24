@@ -4,13 +4,13 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  root: './web/react',
+  root: './react',
   base: '/js/dist/',
   build: {
     outDir: path.resolve(__dirname, 'web/js/dist'),
     emptyOutDir: true,
     rollupOptions: {
-      input: path.resolve(__dirname, 'web/react/index.html'),
+      input: path.resolve(__dirname, 'react/index.html'),
       output: {
         entryFileNames: 'dashboard-bundle.js',
         chunkFileNames: '[name]-[hash].js',
