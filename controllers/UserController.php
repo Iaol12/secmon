@@ -205,6 +205,7 @@ class UserController extends Controller
             $model->passwordText = Yii::$app->params['defaultPass'];
             $model->rolesList = [1, 100];
             $model->email = 'root@localhost';
+            $model->auth_key = Yii::$app->security->generateRandomString();
             if ($model->save(false))
                 return('done');
             else

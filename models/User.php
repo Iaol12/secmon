@@ -132,7 +132,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 	 */
 	public static function findIdentityByAccessToken($token, $type = null)
 	{
-		throw new NotSupportedException('User::findIdentityByAccessToken is currently not supported.');
+		return static::findOne(['auth_key' => $token]);
 	}
 
 	/**
