@@ -5,28 +5,21 @@ namespace app\controllers\api;
 use Yii;
 use app\models\Dashboard; // Assuming 'View' model was renamed to 'Dashboard'
 use app\models\Dashboard\Component; // Assuming View\Component was renamed to Dashboard\Component
-use yii\rest\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\ContentNegotiator;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Response;
+use yii\rest\Controller;
 
-/**
- * DashboardController implements the CRUD actions for the Dashboard (formerly View) model as a REST API.
- * The model name is assumed to be 'Dashboard' now, located at app\models\Dashboard.
- */
+
 class DashboardController extends Controller
 {
-    /**
-     * @inheritdoc
-     */
     public function behaviors()
     {
         $behaviors = parent::behaviors();
 
-        // Use ContentNegotiator to ensure all responses are JSON
         $behaviors['contentNegotiator'] = [
             'class' => ContentNegotiator::class,
             'formats' => [
@@ -34,17 +27,15 @@ class DashboardController extends Controller
             ],
         ];
 
-        // Use HttpBearerAuth for stateless token authentication
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::class,
-            // Only 'options' action is excluded from authentication by default
         ];
 
-        // Define allowed HTTP methods for specific actions
         $behaviors['verbFilter'] = [
             'class' => VerbFilter::class,
             'actions' => [
-                'index' => ['GET'],
+                'dashboards' => ['GET'],
                 'view' => ['GET'],
                 'create' => ['POST'],
                 'update' => ['PUT', 'PATCH'],
@@ -79,7 +70,7 @@ class DashboardController extends Controller
      * @return array|Dashboard[] The list of Dashboard models.
      * @throws ForbiddenHttpException if not authenticated.
      */
-    public function actionIndex()
+    public function actionDashboards()
     {
         $this->checkAccess();
 

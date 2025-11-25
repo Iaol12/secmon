@@ -9,6 +9,9 @@ use yii\web\Controller;
 
 class DashboardController extends Controller
 {
+
+    public $layout = 'dashboardLayout';
+
     public function actionIndex()
     {
         return $this->render('index');
