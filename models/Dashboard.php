@@ -3,30 +3,30 @@
 namespace app\models;
 
 use Yii;
-use app\models\View\Component;
+use app\models\Dashboard\Component;
 use app\models\User;
 
-/**
- * This is the model class for table "views".
- *
- * @property integer $id
- * @property string $name
- * @property integer $user_id
- * @property integer $active
- * @property string $config
- * @property string $refresh_time
- *
- * @property View\Component[] $viewComponents
- * @property User $user
- */
-class View extends \yii\db\ActiveRecord
+    /**
+     * This is the model class for table "dashboards".
+     *
+     * @property integer $id
+     * @property string $name
+     * @property integer $user_id
+     * @property integer $active
+     * @property string $config
+     * @property string $refresh_time
+     *
+     * @property Dashboard\Component[] $dashboardComponents
+     * @property User $user
+     */
+class Dashboard extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return 'views';
+        return 'dashboards';
     }
 
     /**
@@ -62,9 +62,9 @@ class View extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getViewComponents()
+    public function getDashboardComponents()
     {
-        return $this->hasMany(Component::className(), ['view_id' => 'id'])
+        return $this->hasMany(Component::className(), ['dashboard_id' => 'id'])
                     ->orderBy(['order' => SORT_ASC]);
     }
 
