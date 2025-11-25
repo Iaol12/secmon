@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import Dashboard from './components/Dashboard';
 import './index.css';
 
-// Initialize the React app
 const initDashboard = () => {
   const container = document.getElementById('react-dashboard-root');
   
@@ -12,7 +11,6 @@ const initDashboard = () => {
     return;
   }
 
-  // Get configuration from window object (passed from PHP)
   const config = window.dashboardConfig || {};
   console.log(config)
   const {
