@@ -13,6 +13,12 @@ $this->registerCssFile('@web/js/dist/dashboard-bundle.css', [
 $this->registerJsFile('@web/js/dist/dashboard-bundle.js', [
     'position' => \yii\web\View::POS_END
 ]);
+
+// Pass auth token to React app
+$this->registerJs("
+window.dashboardConfig = window.dashboardConfig || {};
+window.dashboardConfig.authToken = " . Json::encode($authToken) . ";
+", \yii\web\View::POS_HEAD);
 ?>
 
 <div class="view-index">

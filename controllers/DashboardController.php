@@ -14,6 +14,17 @@ class DashboardController extends Controller
 
     public function actionIndex()
     {
-        return $this->render('index');
+        // Get current user's auth token
+        $authToken = null;
+        if (!Yii::$app->user->isGuest) {
+            $user = Yii::$app->user->identity;
+            if ($user instanceof User) {
+                $authToken = $user->getAuthKey();
+            }
+        }
+        
+        return $this->render('index', [
+            'authToken' => $authToken
+        ]);
     }
 }

@@ -1,16 +1,36 @@
 import axios from 'axios';
 
-const API_BASE_URL = window.location.origin + '/secmon/web';
+const API_BASE_URL = window.location.origin + '/api/dashboard';
 
 class DashboardAPI {
   constructor() {
-    this.urls = window.dashboardConfig?.urls || {};
+    this.authToken = window.dashboardConfig?.authToken || null;
+    this.apiClient = axios.create({
+      baseURL: API_BASE_URL,
+    });
+
+    this.setupAxiosInterceptors();
   }
 
-  // Dashboard operations
+  setupAxiosInterceptors() {
+    this.apiClient.interceptors.request.use(
+      (config) => {
+        if (this.authToken) {
+          config.headers.Authorization = `Bearer ${this.authToken}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+  }
+
+
+
   async changeView(viewId) {
     try {
-      const response = await axios.get(this.urls.changeView, {
+      const response = await this.apiClient.get('/changeView', { 
         params: { viewId }
       });
       return response.data;
@@ -20,11 +40,14 @@ class DashboardAPI {
     }
   }
 
+
+
   async getRefreshTimes() {
     try {
-      const response = await axios.get(this.urls.getRefreshTimes);
-      // Axios already parses JSON, no need to parse again
-      // If response.data is a string, parse it; otherwise return as is
+
+      const response = await this.apiClient.get('/get-refresh-times');
+
+
       if (typeof response.data === 'string') {
         try {
           return JSON.parse(response.data);
@@ -40,10 +63,13 @@ class DashboardAPI {
     }
   }
 
-  // Component operations
+
+
+
   async createComponent(viewId, config, order) {
     try {
-      const response = await axios.get(this.urls.createComponent, {
+
+      const response = await this.apiClient.get(this.urls.createComponent, {
         params: {
           viewId,
           config: JSON.stringify(config),
@@ -57,9 +83,12 @@ class DashboardAPI {
     }
   }
 
+
+
   async updateComponent(componentId, config) {
     try {
-      const response = await axios.get(this.urls.updateComponent, {
+
+      const response = await this.apiClient.get(this.urls.updateComponent, {
         params: {
           componentId,
           config: JSON.stringify(config)
@@ -72,9 +101,12 @@ class DashboardAPI {
     }
   }
 
+
+
   async deleteComponent(componentId) {
     try {
-      const response = await axios.get(this.urls.deleteComponent, {
+
+      const response = await this.apiClient.get(this.urls.deleteComponent, {
         params: { componentId }
       });
       return response.data;
@@ -84,9 +116,12 @@ class DashboardAPI {
     }
   }
 
+
+
   async updateComponentOrder(viewId, componentOrder) {
     try {
-      const response = await axios.get(this.urls.updateOrder, {
+
+      const response = await this.apiClient.get(this.urls.updateOrder, {
         params: {
           viewId,
           componentOrder: JSON.stringify(componentOrder)
@@ -99,10 +134,13 @@ class DashboardAPI {
     }
   }
 
-  // Content operations
+
+
+
   async updateComponentSettings(data) {
     try {
-      const response = await axios.get(this.urls.updateComponentSettings, {
+
+      const response = await this.apiClient.get(this.urls.updateComponentSettings, {
         params: data
       });
       return response.data;
@@ -112,9 +150,11 @@ class DashboardAPI {
     }
   }
 
+
+
   async deleteComponentSettings(data) {
     try {
-      const response = await axios.get(this.urls.deleteComponentSettings, {
+      const response = await this.apiClient.get(this.urls.deleteComponentSettings, {
         params: data
       });
       return response.data;
@@ -126,7 +166,7 @@ class DashboardAPI {
 
   async getComponentContent(componentId, pagination = 1) {
     try {
-      const response = await axios.get(this.urls.updateComponentContent, {
+      const response = await this.apiClient.get(this.urls.updateComponentContent, {
         params: {
           componentId,
           pagination
