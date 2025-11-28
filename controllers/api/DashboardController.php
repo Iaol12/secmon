@@ -3,8 +3,8 @@
 namespace app\controllers\api;
 
 use Yii;
-use app\models\Dashboard; // Assuming 'View' model was renamed to 'Dashboard'
-use app\models\Dashboard\Component; // Assuming View\Component was renamed to Dashboard\Component
+use app\models\Dashboard;
+use app\models\Dashboard\Component;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
@@ -64,7 +64,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Retrieves all Dashboards (Views) for the current user.
+     * Retrieves all Dashboards for the current user.
      * If no dashboards exist, a default one is created.
      *
      * @return array|Dashboard[] The list of Dashboard models.
@@ -88,21 +88,26 @@ class DashboardController extends Controller
                 $dashboards[] = $dashboard;
             } else {
                 Yii::error('Failed to create default dashboard: ' . print_r($dashboard->errors, true));
-                // Optional: Throw an exception if default creation fails
             }
         }
-        return $dashboards;
+            $safeDashboards = array_map(function (Dashboard $dashboard) {
+            $dashboardArray = $dashboard->toArray();
+            unset($dashboardArray['user_id']);
+            return $dashboardArray;
+        }, $dashboards);
+
+        return $safeDashboards;
     }
 
     /**
-     * Displays a single Dashboard model by ID.
+     * Returns a single Dashboard model by ID.
      *
      * @param int $id The ID of the dashboard.
      * @return Dashboard The loaded dashboard model.
      * @throws NotFoundHttpException if the dashboard does not exist.
      * @throws ForbiddenHttpException if not authenticated or not owned by user.
      */
-    public function actionView($id)
+    public function actionDashboard($id)
     {
         $this->checkAccess();
         return $this->findModel($id);
@@ -188,43 +193,35 @@ class DashboardController extends Controller
         return false;
     }
 
-    /**
-     * Change of currently selected view (dashboard) to one selected by ID.
-     * Sets the specified view as active and returns its components.
-     *
-     * Endpoint: POST /dashboards/change-active/{viewId}
-     *
-     * @param int $viewId ID of the dashboard to activate.
-     * @return array The components of the newly active dashboard.
-     * @throws NotFoundHttpException if the view does not exist or does not belong to the user.
-     * @throws ForbiddenHttpException if not authenticated.
-     */
-    public function actionChangeActive($viewId)
+
+    public function actionChangeActive()
     {
+        // 1. Get the parameter from the POST body (raw data)
+        $newDashboardId = Yii::$app->request->post('newDashboardId');
+
+        if (!$newDashboardId) {
+            // Throw a bad request exception if the ID is missing
+            throw new \yii\web\BadRequestHttpException('Missing newDashboardId parameter in POST request.');
+        }
         $this->checkAccess();
         $userId = Yii::$app->user->getId();
-
-        $view = $this->findModel($viewId); // Already checks ownership
-
-        // Deactivate all current active dashboards for the user
-        Dashboard::updateAll(['active' => 0], ['user_id' => $userId, 'active' => 1]);
-
+        Dashboard::updateAll(['active' => 0], ['user_id' => $userId]);
+        $dashboard = $this->findModel($newDashboardId); 
         // Activate the requested dashboard
-        $view->active = 1;
-        $view->save(false); // Skip validation since we are only changing 'active'
+        $dashboard->active = 1;
+        $dashboard->save(false); 
 
-        // Return the components of the newly active view
-        return $this->getComponentsOfDashboard($viewId);
+        return $this->getComponentsOfDashboard($newDashboardId);
     }
 
     /**
      * Creates a new Component for a specific Dashboard.
      *
      * Endpoint: POST /dashboards/create-component
-     * Body: { "view_id": 1, "config": "{...}", "order": 1 }
+     * Body: { "dashboard_id": 1, "config": "{...}", "order": 1 }
      *
      * NOTE: The original action accepted parameters via query string, REST prefers body data.
-     * This implementation uses body data for config and order, and assumes view_id is also in the body or route.
+     * This implementation uses body data for config and order, and assumes dashboard_id is also in the body or route.
      *
      * @return array|bool The created component model or validation errors.
      * @throws ForbiddenHttpException if not authenticated.
@@ -234,15 +231,15 @@ class DashboardController extends Controller
         $this->checkAccess();
 
         $request = Yii::$app->request;
-        $viewId = $request->post('view_id');
+        $dashboardId = $request->post('dashboard_id');
         $config = $request->post('config');
         $order = $request->post('order');
 
         // Verify the dashboard exists and belongs to the user
-        $this->findModel($viewId);
+        $this->findModel($dashboardId);
 
         $component = new Component();
-        $component->view_id = $viewId;
+        $component->dashboard_id = $dashboardId;
         $component->config = $config;
         $component->order = $order;
 
@@ -283,8 +280,8 @@ class DashboardController extends Controller
             throw new NotFoundHttpException('The requested component does not exist.');
         }
 
-        // Basic check: ensure component's parent view belongs to the user
-        $this->findModel($component->view_id);
+        // Basic check: ensure component's parent dashboard belongs to the user
+        $this->findModel($component->dashboard_id);
 
         $component->config = $request->getBodyParam('config');
 
@@ -316,8 +313,8 @@ class DashboardController extends Controller
             throw new NotFoundHttpException('The requested component does not exist.');
         }
 
-        // Basic check: ensure component's parent view belongs to the user
-        $this->findModel($component->view_id);
+        // Basic check: ensure component's parent dashboard belongs to the user
+        $this->findModel($component->dashboard_id);
 
         if ($component->delete()) {
             Yii::$app->response->statusCode = 204; // No Content
@@ -329,45 +326,23 @@ class DashboardController extends Controller
     }
 
     /**
-     * Returns a map of dashboard IDs to their refresh times.
-     *
-     * Endpoint: GET /dashboards/refresh-times
-     *
-     * @return array Map of [dashboardId => refreshTime]
-     * @throws ForbiddenHttpException if not authenticated.
-     */
-    public function actionGetRefreshTimes()
-    {
-        $this->checkAccess();
-        $userId = Yii::$app->user->getId();
-        $dashboards = Dashboard::findAll(['user_id' => $userId]);
-        $refresh_times = [];
-
-        foreach ($dashboards as $dashboard) {
-            $refresh_times[$dashboard->id] = $dashboard->refresh_time ?? '0';
-        }
-
-        return $refresh_times;
-    }
-
-    /**
      * Updates order of components in a dashboard.
      *
-     * Endpoint: POST /dashboards/update-component-order/{viewId}
+     * Endpoint: POST /dashboards/update-component-order/{dashboardId}
      * Body: [{ "id": 1, "order": 1 }, { "id": 2, "order": 2 }, ...]
      *
-     * @param int $viewId ID of the dashboard to update.
+     * @param int $dashboardId ID of the dashboard to update.
      * @return bool True on successful update.
      * @throws NotFoundHttpException if the dashboard is not found.
      * @throws ForbiddenHttpException if not authenticated or not owned by user.
      */
-    public function actionUpdateComponentOrder($viewId)
+    public function actionUpdateComponentOrder($dashboardId)
     {
         $this->checkAccess();
         $loggedUserId = Yii::$app->user->getId();
 
-        // Check view existence and ownership
-        $this->findModel($viewId);
+        // Check dashboard existence and ownership
+        $this->findModel($dashboardId);
 
         $request = Yii::$app->request;
         // Expects a JSON array in the request body
@@ -382,7 +357,7 @@ class DashboardController extends Controller
 
         foreach ($componentOrder as $value) {
             if (isset($value['id']) && isset($value['order'])) {
-                $component = Component::findOne(['id' => $value['id'], 'view_id' => $viewId]);
+                $component = Component::findOne(['id' => $value['id'], 'dashboard_id' => $dashboardId]);
 
                 if (!empty($component)) {
                     $component->order = (int) $value['order'];
@@ -424,15 +399,15 @@ class DashboardController extends Controller
     /**
      * Gets all components associated with a Dashboard.
      *
-     * @param int $viewId The ID of the dashboard.
+     * @param int $dashboardId The ID of the dashboard.
      * @return array|Component[] The list of components.
      * @throws NotFoundHttpException if the dashboard does not exist or does not belong to the user.
      */
-    protected function getComponentsOfDashboard($viewId)
+    protected function getComponentsOfDashboard($dashboardId)
     {
-        // findModel will throw an exception if the view doesn't exist or doesn't belong to the user
-        $this->findModel($viewId);
+        // findModel will throw an exception if the dashboard doesn't exist or doesn't belong to the user
+        $this->findModel($dashboardId);
 
-        return Component::findAll(['view_id' => $viewId]);
+        return Component::findAll(['dashboard_id' => $dashboardId]);
     }
 }
