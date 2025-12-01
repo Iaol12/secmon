@@ -160,6 +160,7 @@ class DashboardController extends Controller
 
         $model = $this->findModel($id);
 
+        $model->active = 1;
         $model->load(Yii::$app->request->post(), '');
 
         if ($model->save()) {
