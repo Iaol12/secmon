@@ -12,6 +12,7 @@ use yii\filters\ContentNegotiator;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Response;
 use yii\rest\Controller;
+use app\models\Filter;
 
 
 class DashboardController extends Controller
@@ -46,6 +47,8 @@ class DashboardController extends Controller
                 'delete-component' => ['DELETE'],
                 'get-refresh-times' => ['GET'],
                 'update-component-order' => ['POST'],
+                'filters' => ['GET'],
+                'component-content' => ['GET'],
             ],
         ];
 
@@ -270,11 +273,11 @@ class DashboardController extends Controller
      * @throws NotFoundHttpException if the component is not found.
      * @throws ForbiddenHttpException if not authenticated.
      */
-    public function actionUpdateComponent($componentId)
+    public function actionUpdateComponent()
     {
         $this->checkAccess();
         $request = Yii::$app->request;
-
+        $componentId = $request->getBodyParam('componentId');
         $component = Component::findOne($componentId);
 
         if ($component === null) {
@@ -371,6 +374,129 @@ class DashboardController extends Controller
         }
 
         return true;
+    }
+
+
+    
+    /**
+     * Retrieves all Filters for the current user.
+     *
+     * Endpoint: GET /dashboards/filters
+     *
+     * @return array|Filter[] The list of Filter models.
+     * @throws ForbiddenHttpException if not authenticated.
+     */
+    public function actionFilters()
+    {
+        $this->checkAccess();
+
+        $userId = Yii::$app->user->getId();
+        $filters = Filter::find()
+            ->where(['user_id' => $userId])
+            ->orderBy(['name' => SORT_ASC])
+            ->all();
+
+        // Return safe array without user_id
+        $safeFilters = array_map(function (Filter $filter) {
+            return [
+                'id' => $filter->id,
+                'name' => $filter->name,
+                'time_filter' => $filter->time_filter,
+            ];
+        }, $filters);
+
+        return $safeFilters;
+    }
+
+    /**
+     * Retrieves content for a specific component based on filter and data type.
+     *
+     * Endpoint: GET /dashboards/component-content
+     * Query Params: componentId, filterId, dataType, dataParam, page
+     *
+     * @return array The component content data.
+     * @throws ForbiddenHttpException if not authenticated.
+     * @throws NotFoundHttpException if component or filter not found.
+     */
+    public function actionComponentContent()
+    {
+        $this->checkAccess();
+
+        $request = Yii::$app->request;
+        $componentId = $request->get('componentId');
+        $filterId = $request->get('filterId');
+        $dataType = $request->get('dataType', 'table');
+        $dataParam = $request->get('dataParam', '');
+        $page = (int)$request->get('page', 1);
+
+        if (!$componentId) {
+            throw new \yii\web\BadRequestHttpException('Missing componentId parameter.');
+        }
+
+        // Verify component exists and user has access
+        $component = Component::findOne($componentId);
+        if ($component === null) {
+            throw new NotFoundHttpException('The requested component does not exist.');
+        }
+
+        // Check dashboard ownership
+        $this->findModel($component->dashboard_id);
+
+        // Verify filter exists and belongs to user if filterId is provided
+        if ($filterId) {
+            $filter = Filter::findOne(['id' => $filterId, 'user_id' => Yii::$app->user->getId()]);
+            if ($filter === null) {
+                throw new NotFoundHttpException('The requested filter does not exist.');
+            }
+        }
+
+        // TODO: Implement your actual data retrieval logic here
+        // This is a placeholder that you'll need to replace with your actual implementation
+        // that queries your data based on the filter, dataType, and dataParam
+        
+        $result = [
+            'contentTypeId' => $dataType,
+            'data' => null,
+            'html' => null,
+        ];
+
+        switch ($dataType) {
+            case 'barChart':
+                // TODO: Query your data for bar chart
+                // Example structure:
+                $result['data'] = json_encode([
+                    'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    'datasets' => [
+                        [
+                            'label' => 'Data',
+                            'data' => [12, 19, 3, 5, 2],
+                        ]
+                    ]
+                ]);
+                break;
+
+            case 'pieChart':
+                // TODO: Query your data for pie chart
+                // Example structure:
+                $result['data'] = json_encode([
+                    'labels' => ['Red', 'Blue', 'Yellow'],
+                    'datasets' => [
+                        [
+                            'data' => [300, 50, 100],
+                        ]
+                    ]
+                ]);
+                break;
+
+            case 'table':
+            default:
+                // TODO: Query your data for table
+                // Generate HTML table or return structured data
+                $result['html'] = '<table class="data-table"><thead><tr><th>Column 1</th><th>Column 2</th></tr></thead><tbody><tr><td>Data 1</td><td>Data 2</td></tr></tbody></table>';
+                break;
+        }
+
+        return $result;
     }
 
     /**

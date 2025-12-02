@@ -43,7 +43,7 @@ class Component extends \yii\db\ActiveRecord
                 return $this->data_type == 'barChart';
             }, 'message' => 'Enter valid format(nY/nM/nW/nD/nH/nm/nS)!'],
             [['filter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Filter::className(), 'targetAttribute' => ['filter_id' => 'id']],
-            [['dashboard_id'], 'exist', 'skipOnError' => true, 'targetClass' => Dasboard::className(), 'targetAttribute' => ['dashboard_id' => 'id']],
+            [['dashboard_id'], 'exist', 'skipOnError' => true, 'targetClass' => Dashboard::className(), 'targetAttribute' => ['dashboard_id' => 'id']],
         ];
     }
 
