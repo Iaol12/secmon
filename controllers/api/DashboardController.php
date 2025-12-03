@@ -4,7 +4,7 @@ namespace app\controllers\api;
 
 use Yii;
 use app\models\Dashboard;
-use app\models\Dashboard\Component;
+use app\models\Dashboard\DashboardComponent;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
@@ -46,9 +46,7 @@ class DashboardController extends Controller
                 'update-component' => ['PUT', 'PATCH'],
                 'delete-component' => ['DELETE'],
                 'get-refresh-times' => ['GET'],
-                'update-component-order' => ['POST'],
                 'filters' => ['GET'],
-                'component-content' => ['GET'],
             ],
         ];
 
@@ -242,7 +240,7 @@ class DashboardController extends Controller
         // Verify the dashboard exists and belongs to the user
         $this->findModel($dashboardId);
 
-        $component = new Component();
+        $component = new DashboardComponent();
         $component->dashboard_id = $dashboardId;
         $component->config = $config;
         $component->order = $order;
@@ -262,23 +260,13 @@ class DashboardController extends Controller
         return $component->errors;
     }
 
-    /**
-     * Updates an existing Component.
-     *
-     * Endpoint: PUT /dashboards/update-component/{componentId}
-     * Body: { "config": "{...}" }
-     *
-     * @param int $componentId The ID of the component to update.
-     * @return Component|array The updated component or validation errors.
-     * @throws NotFoundHttpException if the component is not found.
-     * @throws ForbiddenHttpException if not authenticated.
-     */
+
     public function actionUpdateComponent()
     {
         $this->checkAccess();
         $request = Yii::$app->request;
         $componentId = $request->getBodyParam('componentId');
-        $component = Component::findOne($componentId);
+        $component = DashboardComponent::findOne($componentId);
 
         if ($component === null) {
             throw new NotFoundHttpException('The requested component does not exist.');
@@ -297,21 +285,12 @@ class DashboardController extends Controller
         return $component->errors;
     }
 
-    /**
-     * Deletes an existing Component.
-     *
-     * Endpoint: DELETE /dashboards/delete-component/{componentId}
-     *
-     * @param int $componentId The ID of the component to delete.
-     * @return bool True on successful deletion.
-     * @throws NotFoundHttpException if the component is not found.
-     * @throws ForbiddenHttpException if not authenticated.
-     */
+
     public function actionDeleteComponent($componentId)
     {
         $this->checkAccess();
 
-        $component = Component::findOne($componentId);
+        $component = DashboardComponent::findOne($componentId);
 
         if ($component === null) {
             throw new NotFoundHttpException('The requested component does not exist.');
@@ -328,55 +307,6 @@ class DashboardController extends Controller
         Yii::$app->response->statusCode = 500;
         return false;
     }
-
-    /**
-     * Updates order of components in a dashboard.
-     *
-     * Endpoint: POST /dashboards/update-component-order/{dashboardId}
-     * Body: [{ "id": 1, "order": 1 }, { "id": 2, "order": 2 }, ...]
-     *
-     * @param int $dashboardId ID of the dashboard to update.
-     * @return bool True on successful update.
-     * @throws NotFoundHttpException if the dashboard is not found.
-     * @throws ForbiddenHttpException if not authenticated or not owned by user.
-     */
-    public function actionUpdateComponentOrder($dashboardId)
-    {
-        $this->checkAccess();
-        $loggedUserId = Yii::$app->user->getId();
-
-        // Check dashboard existence and ownership
-        $this->findModel($dashboardId);
-
-        $request = Yii::$app->request;
-        // Expects a JSON array in the request body
-        $componentOrder = $request->getBodyParam('componentOrder'); // Assuming body contains an array under key 'componentOrder'
-
-        if (!is_array($componentOrder)) {
-            $componentOrder = $request->getBodyParam('0'); // Fallback for simple array body
-            if (!is_array($componentOrder)) {
-                 throw new \yii\web\BadRequestHttpException('Invalid component order data provided.');
-            }
-        }
-
-        foreach ($componentOrder as $value) {
-            if (isset($value['id']) && isset($value['order'])) {
-                $component = Component::findOne(['id' => $value['id'], 'dashboard_id' => $dashboardId]);
-
-                if (!empty($component)) {
-                    $component->order = (int) $value['order'];
-                    // Using save(false) to skip validation and directly update
-                    if (!$component->save(false)) {
-                        Yii::warning("Failed to update component order for ID {$value['id']}: " . print_r($component->errors, true));
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
-
     
     /**
      * Retrieves all Filters for the current user.
@@ -409,97 +339,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * Retrieves content for a specific component based on filter and data type.
-     *
-     * Endpoint: GET /dashboards/component-content
-     * Query Params: componentId, filterId, dataType, dataParam, page
-     *
-     * @return array The component content data.
-     * @throws ForbiddenHttpException if not authenticated.
-     * @throws NotFoundHttpException if component or filter not found.
-     */
-    public function actionComponentContent()
-    {
-        $this->checkAccess();
-
-        $request = Yii::$app->request;
-        $componentId = $request->get('componentId');
-        $filterId = $request->get('filterId');
-        $dataType = $request->get('dataType', 'table');
-        $dataParam = $request->get('dataParam', '');
-        $page = (int)$request->get('page', 1);
-
-        if (!$componentId) {
-            throw new \yii\web\BadRequestHttpException('Missing componentId parameter.');
-        }
-
-        // Verify component exists and user has access
-        $component = Component::findOne($componentId);
-        if ($component === null) {
-            throw new NotFoundHttpException('The requested component does not exist.');
-        }
-
-        // Check dashboard ownership
-        $this->findModel($component->dashboard_id);
-
-        // Verify filter exists and belongs to user if filterId is provided
-        if ($filterId) {
-            $filter = Filter::findOne(['id' => $filterId, 'user_id' => Yii::$app->user->getId()]);
-            if ($filter === null) {
-                throw new NotFoundHttpException('The requested filter does not exist.');
-            }
-        }
-
-        // TODO: Implement your actual data retrieval logic here
-        // This is a placeholder that you'll need to replace with your actual implementation
-        // that queries your data based on the filter, dataType, and dataParam
-        
-        $result = [
-            'contentTypeId' => $dataType,
-            'data' => null,
-            'html' => null,
-        ];
-
-        switch ($dataType) {
-            case 'barChart':
-                // TODO: Query your data for bar chart
-                // Example structure:
-                $result['data'] = json_encode([
-                    'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-                    'datasets' => [
-                        [
-                            'label' => 'Data',
-                            'data' => [12, 19, 3, 5, 2],
-                        ]
-                    ]
-                ]);
-                break;
-
-            case 'pieChart':
-                // TODO: Query your data for pie chart
-                // Example structure:
-                $result['data'] = json_encode([
-                    'labels' => ['Red', 'Blue', 'Yellow'],
-                    'datasets' => [
-                        [
-                            'data' => [300, 50, 100],
-                        ]
-                    ]
-                ]);
-                break;
-
-            case 'table':
-            default:
-                // TODO: Query your data for table
-                // Generate HTML table or return structured data
-                $result['html'] = '<table class="data-table"><thead><tr><th>Column 1</th><th>Column 2</th></tr></thead><tbody><tr><td>Data 1</td><td>Data 2</td></tr></tbody></table>';
-                break;
-        }
-
-        return $result;
-    }
-
-    /**
      * Finds the Dashboard model based on its primary key value and checks ownership.
      *
      * @param int $id
@@ -523,18 +362,12 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Gets all components associated with a Dashboard.
-     *
-     * @param int $dashboardId The ID of the dashboard.
-     * @return array|Component[] The list of components.
-     * @throws NotFoundHttpException if the dashboard does not exist or does not belong to the user.
-     */
+
     protected function getComponentsOfDashboard($dashboardId)
     {
         // findModel will throw an exception if the dashboard doesn't exist or doesn't belong to the user
         $this->findModel($dashboardId);
 
-        return Component::findAll(['dashboard_id' => $dashboardId]);
+        return DashboardComponent::findAll(['dashboard_id' => $dashboardId]);
     }
 }

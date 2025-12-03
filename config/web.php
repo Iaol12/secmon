@@ -47,6 +47,11 @@ $config = [
 	],
 	'params' => $params,
 	'timeZone' => 'Europe/Bratislava',
+	'container' => [
+    'singletons' => [
+        \app\services\ChartDataService::class, 
+    ],
+],
 ];
 
 if (YII_ENV_DEV) {

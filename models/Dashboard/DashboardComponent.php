@@ -20,7 +20,7 @@ use app\models\Dashboard;
  * @property Filter $filter
  * @property Dashboard $dashboard
  */
-class Component extends \yii\db\ActiveRecord
+class DashboardComponent extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -36,30 +36,16 @@ class Component extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['dashboard_id'], 'required'],
-            [['dashboard_id', 'filter_id', 'order'], 'integer'],
-            [['config', 'data_type'], 'string'],
-            [['data_param'], 'match', 'pattern' => '/^\d{1,5}[YMWDHmS]{1}$/', 'when' => function () {
-                return $this->data_type == 'barChart';
-            }, 'message' => 'Enter valid format(nY/nM/nW/nD/nH/nm/nS)!'],
+            [['title', 'chart_type', 'dashboard_id'], 'required'],
+
+            [['dashboard_id', 'filter_id'], 'integer'],
+            
+            [['config'], 'safe'],
+
+            [['title', 'chart_type', 'timeframe'], 'string'],
+
             [['filter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Filter::className(), 'targetAttribute' => ['filter_id' => 'id']],
             [['dashboard_id'], 'exist', 'skipOnError' => true, 'targetClass' => Dashboard::className(), 'targetAttribute' => ['dashboard_id' => 'id']],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'id' => Yii::t('app', 'ID'),
-            'dashboard_id' => Yii::t('app', 'Dashboard ID'),
-            'filter_id' => Yii::t('app', 'Filter ID'),
-            'config' => Yii::t('app', 'Config'),
-            'order' => Yii::t('app', 'Order'),
-            'data_type' => Yii::t('app', 'Content Type'),
-            'data_param' => Yii::t('app', 'Content Type Parameters')
         ];
     }
 
