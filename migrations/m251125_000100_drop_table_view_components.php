@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Class m220831_074323_drop_table_events_correlated
  */
-class m220831_074323_drop_table_events_correlated extends Migration
+class m251125_000100_drop_table_view_components extends Migration
 {
     /**
      * {@inheritdoc}

@@ -233,17 +233,19 @@ class DashboardController extends Controller
         $this->checkAccess();
 
         $request = Yii::$app->request;
+        $title = $request->post('title');
         $dashboardId = $request->post('dashboard_id');
         $config = $request->post('config');
-        $order = $request->post('order');
+        $chartType = $request->post('chart_type');
 
         // Verify the dashboard exists and belongs to the user
         $this->findModel($dashboardId);
 
         $component = new DashboardComponent();
         $component->dashboard_id = $dashboardId;
+        $component->title = $title;
+        $component->chart_type = $chartType;
         $component->config = $config;
-        $component->order = $order;
 
         if ($component->save()) {
             Yii::$app->response->statusCode = 201; // Created

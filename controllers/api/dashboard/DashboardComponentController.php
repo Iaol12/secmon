@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers\api;
+namespace app\controllers\api\dashboard;
 
 use Yii;
 use app\models\Dashboard;
@@ -20,6 +20,9 @@ use app\services\ChartDataService;
 
 class DashboardComponentController extends Controller
 {
+
+    private $chartDataService;
+
     public function __construct($id, $module, ChartDataService $chartDataService, $config = [])
     {
         $this->chartDataService = $chartDataService;
@@ -94,22 +97,22 @@ class DashboardComponentController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->getFilteredEventsPieChart($component->filter_id, $field)
+                    'data' => $this->chartDataService->getFilteredEventsPieChart($component->filter_id, $field)
                 ];
                 
             case "barChart":
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->getFilteredEventsBarChart($component->filter_id, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsBarChart($component->filter_id, $timeframe)
                 ];
                 
             case "table":
                 $config = is_string($component->config) ? Json::decode($component->config) : $component->config;
                 $columns = $config['columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
                 
-                $filteredData = $this->getFilteredEvents($component->filter_id, $pagination);
-                $count = $this->getFilteredEventsCount($component->filter_id);
+                $filteredData = $this->chartDataService->getFilteredEvents($component->filter_id, $pagination);
+                $count = $this->chartDataService->getFilteredEventsCount($component->filter_id);
 
                 return [
                     'chartType' => $chartType,
@@ -132,15 +135,19 @@ class DashboardComponentController extends Controller
      * @param integer $componentId
      * @return array
      */
-    public function actionUpdateSettings($componentId)
+    public function actionUpdateSettings()
     {
+        $componentId = Yii::$app->request->post('component_id');
+
         $this->checkAccess();
-        
         $component = $this->findModel($componentId);
         $this->checkComponentOwnership($component);
 
-        $filterId = Yii::$app->request->post('filter_id');
+
+        $title = Yii::$app->request->post('title');
         $chartType = Yii::$app->request->post('chart_type');
+        $dashboardId = Yii::$app->request->post('dashboard_id');
+        $filterId = Yii::$app->request->post('filter_id');
         $timeframe = Yii::$app->request->post('timeframe');
         $config = Yii::$app->request->post('config');
 
@@ -151,9 +158,21 @@ class DashboardComponentController extends Controller
             }
             $component->filter_id = $filterId;
         }
+        
+        if (!empty($title)) {
+            $component->title = $title;
+        }
 
         if (!empty($chartType)) {
             $component->chart_type = $chartType;
+        }
+
+        if (!empty($dashboardId)) {
+            $dashboard = Dashboard::findOne(['id' => $dashboardId]);
+            if (empty($dashboard) || $dashboard->user_id != Yii::$app->user->getId()) {
+                throw new ForbiddenHttpException('You do not have permission to use this dashboard.');
+            }
+            $component->dashboard_id = $dashboardId;
         }
 
         if (!empty($timeframe)) {

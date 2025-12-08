@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 
-class m210403_113834_019_create_table_dashboard_components extends Migration
+class m251125_000102_create_table_dashboard_components extends Migration
 {
     public function up()
     {
@@ -16,7 +16,7 @@ class m210403_113834_019_create_table_dashboard_components extends Migration
             'title' => $this->string(255)->notNull(),
             'chart_type' => $this->string(100)->notNull(),
             'timeframe' => $this->string(100),
-            'config' => $this->jsonb(),
+            'config' => $this->json(),
             'dashboard_id' => $this->integer()->notNull(),
             'filter_id' => $this->integer(),
         ], $tableOptions);

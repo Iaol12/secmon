@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles renaming of table `{{%views}}` to `{{%dashboards}}`.
  */
-class m251125_000100_rename_table_views_to_dashboards extends Migration
+class m251125_000101_rename_table_views_to_dashboards extends Migration
 {
     private $oldTableName = '{{%views}}';
     private $newTableName = '{{%dashboards}}';
