@@ -130,6 +130,13 @@ class DashboardComponentController extends Controller
         }
     }
 
+    public function actionAllSecurityEventFields()
+    {
+        return [
+            'fields' => array_keys(\app\models\SecurityEvents::columns())
+        ];
+    }
+
     /**
      * Update dashboard component filter and configuration
      * @param integer $componentId
