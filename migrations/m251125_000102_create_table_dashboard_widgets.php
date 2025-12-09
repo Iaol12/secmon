@@ -14,7 +14,7 @@ class m251125_000102_create_table_dashboard_widgets extends Migration
         $this->createTable('{{%dashboard_widgets}}', [
             'id' => $this->primaryKey(),
             'title' => $this->string(255)->notNull(),
-            'chart_type' => $this->string(100)->notNull(),
+            'chart_type' => $this->string(100),
             'timeframe' => $this->string(100),
             'config' => $this->json(),
             'dashboard_id' => $this->integer()->notNull(),

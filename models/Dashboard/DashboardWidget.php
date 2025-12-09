@@ -37,7 +37,7 @@ class DashboardWidget extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['title', 'chart_type', 'dashboard_id'], 'required'],
+            [['title', 'dashboard_id'], 'required'],
 
             [['dashboard_id', 'filter_id'], 'integer'],
             
