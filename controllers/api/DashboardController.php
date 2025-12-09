@@ -4,7 +4,7 @@ namespace app\controllers\api;
 
 use Yii;
 use app\models\Dashboard;
-use app\models\Dashboard\DashboardComponent;
+use app\models\Dashboard\DashboardWidget;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
@@ -42,9 +42,9 @@ class DashboardController extends Controller
                 'update' => ['PUT', 'PATCH'],
                 'delete' => ['DELETE'],
                 'change-active' => ['POST'],
-                'create-component' => ['POST'],
-                'update-component' => ['PUT', 'PATCH'],
-                'delete-component' => ['DELETE'],
+                'create-widget' => ['POST'],
+                'update-widget' => ['PUT', 'PATCH'],
+                'delete-widget' => ['DELETE'],
                 'get-refresh-times' => ['GET'],
                 'filters' => ['GET'],
             ],
@@ -213,22 +213,22 @@ class DashboardController extends Controller
         $dashboard->active = 1;
         $dashboard->save(false); 
 
-        return $this->getComponentsOfDashboard($newDashboardId);
+        return $this->getWidgetsOfDashboard($newDashboardId);
     }
 
     /**
-     * Creates a new Component for a specific Dashboard.
+     * Creates a new Widget for a specific Dashboard.
      *
-     * Endpoint: POST /dashboards/create-component
+     * Endpoint: POST /dashboards/create-widget
      * Body: { "dashboard_id": 1, "config": "{...}", "order": 1 }
      *
      * NOTE: The original action accepted parameters via query string, REST prefers body data.
      * This implementation uses body data for config and order, and assumes dashboard_id is also in the body or route.
      *
-     * @return array|bool The created component model or validation errors.
+     * @return array|bool The created widget model or validation errors.
      * @throws ForbiddenHttpException if not authenticated.
      */
-    public function actionCreateComponent()
+    public function actionCreateWidget()
     {
         $this->checkAccess();
 
@@ -241,67 +241,67 @@ class DashboardController extends Controller
         // Verify the dashboard exists and belongs to the user
         $this->findModel($dashboardId);
 
-        $component = new DashboardComponent();
-        $component->dashboard_id = $dashboardId;
-        $component->title = $title;
-        $component->chart_type = $chartType;
-        $component->config = $config;
+        $widget = new DashboardWidget();
+        $widget->dashboard_id = $dashboardId;
+        $widget->title = $title;
+        $widget->chart_type = $chartType;
+        $widget->config = $config;
 
-        if ($component->save()) {
+        if ($widget->save()) {
             Yii::$app->response->statusCode = 201; // Created
             // Note: Returning the full widget HTML is non-RESTful, but kept for compatibility with the old controller's intended usage.
-            // A pure API would just return the component model.
+            // A pure API would just return the widget model.
             return [
-                'component' => $component,
-                // 'html' => \app\widgets\ComponentWidget::widget(['data' => compact('component')]), // Removed to keep it RESTful, return data only.
-                'id' => $component->id,
+                'widget' => $widget,
+                // 'html' => \app\widgets\ComponentWidget::widget(['data' => compact('widget')]), // Removed to keep it RESTful, return data only.
+                'id' => $widget->id,
             ];
         }
 
         Yii::$app->response->statusCode = 422;
-        return $component->errors;
+        return $widget->errors;
     }
 
 
-    public function actionUpdateComponent()
+    public function actionUpdateWidget()
     {
         $this->checkAccess();
         $request = Yii::$app->request;
-        $componentId = $request->getBodyParam('componentId');
-        $component = DashboardComponent::findOne($componentId);
+        $widgetId = $request->getBodyParam('widgetId');
+        $widget = DashboardWidget::findOne($widgetId);
 
-        if ($component === null) {
-            throw new NotFoundHttpException('The requested component does not exist.');
+        if ($widget === null) {
+            throw new NotFoundHttpException('The requested widget does not exist.');
         }
 
-        // Basic check: ensure component's parent dashboard belongs to the user
-        $this->findModel($component->dashboard_id);
+        // Basic check: ensure widget's parent dashboard belongs to the user
+        $this->findModel($widget->dashboard_id);
 
-        $component->config = $request->getBodyParam('config');
+        $widget->config = $request->getBodyParam('config');
 
-        if ($component->save()) {
-            return $component;
+        if ($widget->save()) {
+            return $widget;
         }
 
         Yii::$app->response->statusCode = 422;
-        return $component->errors;
+        return $widget->errors;
     }
 
 
-    public function actionDeleteComponent($componentId)
+    public function actionDeleteWidget($widgetId)
     {
         $this->checkAccess();
 
-        $component = DashboardComponent::findOne($componentId);
+        $widget = DashboardWidget::findOne($widgetId);
 
-        if ($component === null) {
-            throw new NotFoundHttpException('The requested component does not exist.');
+        if ($widget === null) {
+            throw new NotFoundHttpException('The requested widget does not exist.');
         }
 
-        // Basic check: ensure component's parent dashboard belongs to the user
-        $this->findModel($component->dashboard_id);
+        // Basic check: ensure widget's parent dashboard belongs to the user
+        $this->findModel($widget->dashboard_id);
 
-        if ($component->delete()) {
+        if ($widget->delete()) {
             Yii::$app->response->statusCode = 204; // No Content
             return true;
         }
@@ -365,11 +365,11 @@ class DashboardController extends Controller
     }
 
 
-    protected function getComponentsOfDashboard($dashboardId)
+    protected function getWidgetsOfDashboard($dashboardId)
     {
         // findModel will throw an exception if the dashboard doesn't exist or doesn't belong to the user
         $this->findModel($dashboardId);
 
-        return DashboardComponent::findAll(['dashboard_id' => $dashboardId]);
+        return DashboardWidget::findAll(['dashboard_id' => $dashboardId]);
     }
 }

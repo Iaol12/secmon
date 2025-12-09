@@ -7,7 +7,7 @@ use app\models\Filter;
 use app\models\Dashboard;
 
 /**
- * This is the model class for table "dashboard_components".
+ * This is the model class for table "dashboard_widgets".
  *
  * @property integer $id
  * @property integer $dashboard_id
@@ -20,14 +20,14 @@ use app\models\Dashboard;
  * @property Filter $filter
  * @property Dashboard $dashboard
  */
-class DashboardComponent extends \yii\db\ActiveRecord
+class DashboardWidget extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return 'dashboard_components';
+        return 'dashboard_widgets';
     }
 
     /**

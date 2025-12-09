@@ -4,7 +4,7 @@ namespace app\controllers\api\dashboard;
 
 use Yii;
 use app\models\Dashboard;
-use app\models\Dashboard\DashboardComponent;
+use app\models\Dashboard\DashboardWidget;
 use app\models\SecurityEvents;
 use app\models\Filter;
 use yii\web\NotFoundHttpException;
@@ -18,7 +18,7 @@ use yii\helpers\Json;
 use app\services\ChartDataService;
 
 
-class DashboardComponentController extends Controller
+class DashboardWidgetController extends Controller
 {
 
     private $chartDataService;
@@ -67,52 +67,52 @@ class DashboardComponentController extends Controller
     }
 
     /**
-     * Get dashboard component with filter applied content
-     * @param integer $componentId
+     * Get dashboard widget with filter applied content
+     * @param integer $widgetId
      * @param integer $pagination
      * @return array
      */
-    public function actionContent($componentId, $pagination = 1)
+    public function actionContent($widgetId, $pagination = 1)
     {
         $this->checkAccess();
         
-        $component = $this->findModel($componentId);
-        $this->checkComponentOwnership($component);
+        $widget = $this->findModel($widgetId);
+        $this->checkWidgetOwnership($widget);
 
-        $filter = !empty($component->filter_id) ? Filter::findOne(['id' => $component->filter_id]) : null;
+        $filter = !empty($widget->filter_id) ? Filter::findOne(['id' => $widget->filter_id]) : null;
 
         if (!empty($filter) && $filter->user_id != Yii::$app->user->getId()) {
             throw new ForbiddenHttpException('You do not have permission to access this filter.');
         }
 
-        $chartType = $component->chart_type;
-        $timeframe = $component->timeframe ?? "";
+        $chartType = $widget->chart_type;
+        $timeframe = $widget->timeframe ?? "";
 
         switch ($chartType) {
             case "pieChart":
                 // Parse config to get the field to chart
-                $config = is_string($component->config) ? Json::decode($component->config) : $component->config;
+                $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
                 $field = $config['pie_chart_variable'] ?? 'cef_severity';
                 
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsPieChart($component->filter_id, $field)
+                    'data' => $this->chartDataService->getFilteredEventsPieChart($widget->filter_id, $field)
                 ];
                 
             case "barChart":
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsBarChart($component->filter_id, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $timeframe)
                 ];
                 
             case "table":
-                $config = is_string($component->config) ? Json::decode($component->config) : $component->config;
+                $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
                 $columns = $config['columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
                 
-                $filteredData = $this->chartDataService->getFilteredEvents($component->filter_id, $pagination);
-                $count = $this->chartDataService->getFilteredEventsCount($component->filter_id);
+                $filteredData = $this->chartDataService->getFilteredEvents($widget->filter_id, $pagination);
+                $count = $this->chartDataService->getFilteredEventsCount($widget->filter_id);
 
                 return [
                     'chartType' => $chartType,
@@ -138,17 +138,17 @@ class DashboardComponentController extends Controller
     }
 
     /**
-     * Update dashboard component filter and configuration
-     * @param integer $componentId
+     * Update dashboard widget filter and configuration
+     * @param integer $widgetId
      * @return array
      */
     public function actionUpdateSettings()
     {
-        $componentId = Yii::$app->request->post('component_id');
+        $widgetId = Yii::$app->request->post('widget_id');
 
         $this->checkAccess();
-        $component = $this->findModel($componentId);
-        $this->checkComponentOwnership($component);
+        $widget = $this->findModel($widgetId);
+        $this->checkWidgetOwnership($widget);
 
 
         $title = Yii::$app->request->post('title');
@@ -163,15 +163,15 @@ class DashboardComponentController extends Controller
             if (empty($filter) || $filter->user_id != Yii::$app->user->getId()) {
                 throw new ForbiddenHttpException('You do not have permission to use this filter.');
             }
-            $component->filter_id = $filterId;
+            $widget->filter_id = $filterId;
         }
         
         if (!empty($title)) {
-            $component->title = $title;
+            $widget->title = $title;
         }
 
         if (!empty($chartType)) {
-            $component->chart_type = $chartType;
+            $widget->chart_type = $chartType;
         }
 
         if (!empty($dashboardId)) {
@@ -179,11 +179,11 @@ class DashboardComponentController extends Controller
             if (empty($dashboard) || $dashboard->user_id != Yii::$app->user->getId()) {
                 throw new ForbiddenHttpException('You do not have permission to use this dashboard.');
             }
-            $component->dashboard_id = $dashboardId;
+            $widget->dashboard_id = $dashboardId;
         }
 
         if (!empty($timeframe)) {
-            $component->timeframe = $timeframe;
+            $widget->timeframe = $timeframe;
         }
 
         if (!empty($config)) {
@@ -210,19 +210,19 @@ class DashboardComponentController extends Controller
                 }
             }
 
-            $component->config = is_array($config) ? Json::encode($config) : $config;
+            $widget->config = is_array($config) ? Json::encode($config) : $config;
         }
 
-        if ($component->save()) {
+        if ($widget->save()) {
             return [
                 'success' => true,
-                'component' => $component,
+                'widget' => $widget,
             ];
         }
 
         return [
             'success' => false,
-            'errors' => $component->errors,
+            'errors' => $widget->errors,
         ];
     }
 
@@ -239,31 +239,31 @@ class DashboardComponentController extends Controller
     }
 
     /**
-     * Check if the current user owns the dashboard that contains this component
-     * @param DashboardComponent $component
+     * Check if the current user owns the dashboard that contains this widget
+     * @param DashboardWidget $widget
      * @throws ForbiddenHttpException
      */
-    protected function checkComponentOwnership($component)
+    protected function checkWidgetOwnership($widget)
     {
-        $dashboard = Dashboard::findOne(['id' => $component->dashboard_id]);
+        $dashboard = Dashboard::findOne(['id' => $widget->dashboard_id]);
         
         if (empty($dashboard) || $dashboard->user_id != Yii::$app->user->getId()) {
-            throw new ForbiddenHttpException('You do not have permission to access this component.');
+            throw new ForbiddenHttpException('You do not have permission to access this widget.');
         }
     }
 
     /**
-     * Finds the DashboardComponent model based on its primary key value.
+     * Finds the DashboardWidget model based on its primary key value.
      * @param integer $id
-     * @return DashboardComponent the loaded model
+     * @return DashboardWidget the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = DashboardComponent::findOne($id)) !== null) {
+        if (($model = DashboardWidget::findOne($id)) !== null) {
             return $model;
         }
 
-        throw new NotFoundHttpException('The requested dashboard component does not exist.');
+        throw new NotFoundHttpException('The requested dashboard widget does not exist.');
     }
 }

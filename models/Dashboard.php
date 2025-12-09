@@ -3,7 +3,7 @@
 namespace app\models;
 
 use Yii;
-use app\models\Dashboard\Component;
+use app\models\Dashboard\DashboardWidget;
 use app\models\User;
 
     /**
@@ -16,7 +16,7 @@ use app\models\User;
      * @property string $config
      * @property string $refresh_time
      *
-     * @property Dashboard\Component[] $dashboardComponents
+     * @property Dashboard\DashboardWidget[] $dashboardWidgets
      * @property User $user
      */
 class Dashboard extends \yii\db\ActiveRecord
@@ -62,9 +62,9 @@ class Dashboard extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getDashboardComponents()
+    public function getDashboardWidgets()
     {
-        return $this->hasMany(Component::className(), ['dashboard_id' => 'id'])
+        return $this->hasMany(DashboardWidget::className(), ['dashboard_id' => 'id'])
                     ->orderBy(['order' => SORT_ASC]);
     }
 
