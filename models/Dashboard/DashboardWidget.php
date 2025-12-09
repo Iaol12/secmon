@@ -19,6 +19,7 @@ use app\models\Dashboard;
  *
  * @property Filter $filter
  * @property Dashboard $dashboard
+ * @property WidgetLayout $layout
  */
 class DashboardWidget extends \yii\db\ActiveRecord
 {
@@ -63,5 +64,13 @@ class DashboardWidget extends \yii\db\ActiveRecord
     public function getDashboard()
     {
         return $this->hasOne(Dashboard::className(), ['id' => 'dashboard_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getLayout()
+    {
+        return $this->hasOne(WidgetLayout::className(), ['widget_id' => 'id']);
     }
 }

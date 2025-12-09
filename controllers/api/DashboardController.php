@@ -5,6 +5,7 @@ namespace app\controllers\api;
 use Yii;
 use app\models\Dashboard;
 use app\models\Dashboard\DashboardWidget;
+use app\models\Dashboard\WidgetLayout;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
@@ -43,8 +44,8 @@ class DashboardController extends Controller
                 'delete' => ['DELETE'],
                 'change-active' => ['POST'],
                 'create-widget' => ['POST'],
-                'update-widget' => ['PUT', 'PATCH'],
                 'delete-widget' => ['DELETE'],
+                'update-widget-layout' => ['POST', 'PUT'],
                 'get-refresh-times' => ['GET'],
                 'filters' => ['GET'],
             ],
@@ -262,32 +263,6 @@ class DashboardController extends Controller
         return $widget->errors;
     }
 
-
-    public function actionUpdateWidget()
-    {
-        $this->checkAccess();
-        $request = Yii::$app->request;
-        $widgetId = $request->getBodyParam('widgetId');
-        $widget = DashboardWidget::findOne($widgetId);
-
-        if ($widget === null) {
-            throw new NotFoundHttpException('The requested widget does not exist.');
-        }
-
-        // Basic check: ensure widget's parent dashboard belongs to the user
-        $this->findModel($widget->dashboard_id);
-
-        $widget->config = $request->getBodyParam('config');
-
-        if ($widget->save()) {
-            return $widget;
-        }
-
-        Yii::$app->response->statusCode = 422;
-        return $widget->errors;
-    }
-
-
     public function actionDeleteWidget($widgetId)
     {
         $this->checkAccess();
@@ -309,8 +284,71 @@ class DashboardController extends Controller
         Yii::$app->response->statusCode = 500;
         return false;
     }
-    
-    /**
+
+    public function actionUpdateWidgetLayout()
+    {
+        $this->checkAccess();
+        $layoutData = Yii::$app->request->post('widgetsPositionalInformation', []);
+        
+        $transaction = Yii::$app->db->beginTransaction();
+        
+        try {
+            $savedLayouts = [];
+            
+            foreach ($layoutData as $data) {
+                $widgetId = $data['widget_id'] ?? null;
+                
+                if (!$widgetId) {
+                    continue;
+                }
+                
+                // Verify the widget exists and belongs to user's dashboard
+                $widget = DashboardWidget::findOne($widgetId);
+                if (!$widget) {
+                    continue;
+                }
+                
+                // Verify ownership through dashboard
+                $this->findModel($widget->dashboard_id);
+                
+                // Find or create layout record for this widget
+                $layout = WidgetLayout::findOne(['widget_id' => $widgetId]);
+                if (!$layout) {
+                    $layout = new WidgetLayout();
+                    $layout->widget_id = $widgetId;
+                }
+                
+                // Update layout properties
+                $layout->x = $data['x'] ?? 0;
+                $layout->y = $data['y'] ?? 0;
+                $layout->w = $data['w'] ?? 3;
+                $layout->h = $data['h'] ?? 4;
+                
+                if (!$layout->save()) {
+                    throw new \Exception('Failed to save layout for widget ' . $widgetId);
+                }
+                
+                $savedLayouts[] = $layout;
+            }
+            
+            $transaction->commit();
+            
+            Yii::$app->response->statusCode = 200;
+            return [
+                'success' => true,
+                'message' => 'Widget layouts updated successfully',
+                'count' => count($savedLayouts)
+            ];
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Failed to update widget layouts: ' . $e->getMessage()
+            ];
+        }
+    }    /**
      * Retrieves all Filters for the current user.
      *
      * Endpoint: GET /dashboards/filters
@@ -370,6 +408,17 @@ class DashboardController extends Controller
         // findModel will throw an exception if the dashboard doesn't exist or doesn't belong to the user
         $this->findModel($dashboardId);
 
-        return DashboardWidget::findAll(['dashboard_id' => $dashboardId]);
+        $widgets = DashboardWidget::find()
+            ->where(['dashboard_id' => $dashboardId])
+            ->with('layout')
+            ->all();
+
+        return array_map(function($widget) {
+            $widgetArray = $widget->toArray();
+            $widgetArray['layout'] = $widget->layout ? $widget->layout->toArray() : null;
+            return $widgetArray;
+        }, $widgets);
     }
+
+
 }
