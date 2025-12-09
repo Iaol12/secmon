@@ -31,7 +31,30 @@ class ChartDataService
         return $filteredData;
     }
 
-    protected function getFilteredEventsBarChart($filterId, $timeframe = null)
+    public function getFilteredEventsBarChart($filterId, $field)
+    {
+        $query = SecurityEvents::find();
+        $label = "CAST(" . $field . " AS text) as label";
+        $value = "count(" . $field . ") as count";
+        
+        $query->select([$label, $value])
+            ->groupby(["label"])
+            ->orderBy(['label' => SORT_ASC]);
+
+        if (!empty($filterId)) {
+            $filter = Filter::findOne(['id' => $filterId]);
+            if (!empty($filter)) {
+                $query->applyFilter($filter);
+            }
+        }
+
+        $filteredData = $query->asArray()->all();
+        Yii::$app->cache->flush();
+
+        return $filteredData;
+    }
+
+    public function getFilteredEventsLineChart($filterId, $timeframe = null)
     {
         $range = 'P1D';
 
@@ -88,7 +111,7 @@ class ChartDataService
         return $chartData;
     }
 
-    protected function getFilteredEvents($filterId, $page)
+    public function getFilteredEvents($filterId, $page)
     {
         $query = SecurityEvents::find();
         $page = max(1, intval($page)) - 1;
@@ -111,7 +134,7 @@ class ChartDataService
         return $filteredData;
     }
 
-    protected function getFilteredEventsCount($filterId)
+    public function getFilteredEventsCount($filterId)
     {
         $query = SecurityEvents::find();
         $query->select(["count(*) as count"]);

@@ -101,10 +101,21 @@ class DashboardWidgetController extends Controller
                 ];
                 
             case "barChart":
+                // Parse config to get the field to chart
+                $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
+                $field = $config['bar_chart_variable'] ?? 'cef_severity';
+                
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $field)
+                ];
+                
+            case "lineChart":
+                return [
+                    'chartType' => $chartType,
+                    'timeframe' => $timeframe,
+                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe)
                 ];
                 
             case "table":
@@ -207,6 +218,13 @@ class DashboardWidgetController extends Controller
                     $config = $configArray;
                 } else {
                     throw new \yii\web\BadRequestHttpException('Invalid variable for pie chart configuration.');
+                }
+            }
+            elseif($chartType == 'barChart') {
+                if (!empty($configArray['bar_chart_variable']) && in_array($configArray['bar_chart_variable'], $dbCols)) {
+                    $config = $configArray;
+                } else {
+                    throw new \yii\web\BadRequestHttpException('Invalid variable for bar chart configuration.');
                 }
             }
 
