@@ -72,7 +72,7 @@ class DashboardComponentController extends Controller
      * @param integer $pagination
      * @return array
      */
-    public function actionGetContent($componentId, $pagination = 1)
+    public function actionContent($componentId, $pagination = 1)
     {
         $this->checkAccess();
         
@@ -92,7 +92,7 @@ class DashboardComponentController extends Controller
             case "pieChart":
                 // Parse config to get the field to chart
                 $config = is_string($component->config) ? Json::decode($component->config) : $component->config;
-                $field = $config['field'] ?? 'cef_severity';
+                $field = $config['pie_chart_variable'] ?? 'cef_severity';
                 
                 return [
                     'chartType' => $chartType,
