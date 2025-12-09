@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers\api\dashboard;
+namespace app\controllers\api;
 
 use Yii;
 use app\models\Dashboard;
