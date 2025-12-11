@@ -1,0 +1,77 @@
+import React from 'react';
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+
+const LineChart = ({ data }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100%',
+        color: '#999'
+      }}>
+        No data available
+      </div>
+    );
+  }
+
+  // Transform data to format expected by Recharts
+  const chartData = data.map(item => ({
+    name: item.x || item.label || 'Unknown',
+    value: item.y || item.count || 0
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <RechartsLineChart 
+        data={chartData}
+        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <XAxis 
+          dataKey="name" 
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          interval="preserveStartEnd"
+          tick={{ fontSize: 12 }}
+        />
+        <YAxis 
+          label={{ value: 'Count', angle: -90, position: 'insideLeft' }}
+          tick={{ fontSize: 12 }}
+        />
+        <Tooltip 
+          contentStyle={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid #ccc',
+            borderRadius: '4px'
+          }}
+        />
+        <Legend 
+          wrapperStyle={{ paddingTop: '20px' }}
+        />
+        <Line 
+          type="monotone"
+          dataKey="value" 
+          stroke="#8884d8"
+          strokeWidth={2}
+          dot={{ r: 4 }}
+          activeDot={{ r: 6 }}
+          name="Value"
+        />
+      </RechartsLineChart>
+    </ResponsiveContainer>
+  );
+};
+
+export default LineChart;

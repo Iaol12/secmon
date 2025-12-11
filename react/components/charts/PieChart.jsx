@@ -4,8 +4,7 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
-  ResponsiveContainer
+  Legend
 } from 'recharts';
 
 const COLORS = [
@@ -14,7 +13,7 @@ const COLORS = [
   '#512DA8', '#303F9F', '#1976D2', '#0288D1', '#0097A7'
 ];
 
-const PieChart = ({ data }) => {
+const PieChart = ({ data, config }) => {
   if (!data || data.length === 0) {
     return (
       <div style={{ 
@@ -52,7 +51,7 @@ const PieChart = ({ data }) => {
             {data.name}
           </p>
           <p style={{ margin: '0', color: '#666' }}>
-            Count: {data.value}
+            Počet: {data.value}
           </p>
           <p style={{ margin: '0', color: '#666' }}>
             {percentage}%
@@ -64,30 +63,35 @@ const PieChart = ({ data }) => {
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <RechartsPieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend 
+    <RechartsPieChart 
+      responsive 
+      style={{ 
+        height: '100%', 
+        width: '100%',
+        minHeight: '250px'
+      }}
+    >
+      <Pie
+        data={chartData}
+        cx="50%"
+        cy="50%"
+        labelLine={false}
+        outerRadius="80%"
+        innerRadius={config.innerRadius || "0%"}
+        fill="#8884d8"
+        dataKey="value"
+      >
+        {chartData.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
+      </Pie>
+      <Tooltip content={<CustomTooltip />} />
+      {config.show_labels && <Legend 
           verticalAlign="bottom" 
           height={36}
           wrapperStyle={{ fontSize: '12px' }}
-        />
-      </RechartsPieChart>
-    </ResponsiveContainer>
+        />}
+    </RechartsPieChart>
   );
 };
 

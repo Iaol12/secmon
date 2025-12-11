@@ -1,23 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import WidgetCard from './WidgetCard';
+import DashboardModal from './DashboardModal';
 import api from '../services/api';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './Dashboard.css';
+import { debounce } from 'lodash';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
-  const [currentViewId, setCurrentViewId] = useState(activeViewId);
-  const [components, setComponents] = useState([]);
+const Dashboard = () => {
+  const [currentDashboardId, setCurrentDashboardId] = useState("");
+  const [widgets, setWidgets] = useState([]);
   const [refreshTime, setRefreshTime] = useState(0);
   const [refreshInterval, setRefreshInterval] = useState(null);
+  const [dashboards, setDashboards] = useState([]);
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    mode: 'create', // 'create' or 'edit'
+    dashboard: null
+  });
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [layoutLoaded, setLayoutLoaded] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
+
 
   useEffect(() => {
-    loadView(currentViewId);
-    loadRefreshTimes();
-  }, [currentViewId]);
+      const initialize = async () => {
+          const dbs = await loadDashboards(); // Assuming loadDashboards now returns the data
+          if (dbs && dbs.length > 0) {
+              const activeDashboardId = dbs.find(d => d.active)?.id || dbs[0].id;
+              setCurrentDashboardId(activeDashboardId);
+          }
+      };
+      initialize();
+  }, []); // Empty dependency array is fine here
+
+  useEffect(() => {
+      if (currentDashboardId) {
+          loadDashboard(currentDashboardId);
+          // Now find the dashboard from the 'dashboards' state which is guaranteed to be loaded
+          const currentDb = dashboards.find(d => d.id === parseInt(currentDashboardId));
+          setRefreshTime(parseRefreshTime(currentDb?.refresh_time));
+          setLayoutLoaded(false); // Reset layout loaded state when dashboard changes
+      }
+  }, [currentDashboardId, dashboards]); // Add 'dashboards' as a dependency here
 
   useEffect(() => {
     // Setup auto-refresh
@@ -27,45 +55,45 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
 
     if (refreshTime > 0) {
       const interval = setInterval(() => {
-        loadView(currentViewId, false);
+        loadDashboard(currentDashboardId, false);
       }, refreshTime * 1000);
       setRefreshInterval(interval);
 
       return () => clearInterval(interval);
     }
-  }, [refreshTime, currentViewId]);
+  }, [refreshTime, currentDashboardId]);
 
-  const loadView = async (viewId, changeActive = true) => {
+  const loadDashboard = async (dashboardId, changeActive = true) => {
     try {
       if (changeActive) {
-        await api.changeView(viewId);
-      }
-      
-      // Get components for the view from the views prop
-      const view = views.find(v => v.id === parseInt(viewId));
-      if (view && view.components) {
-        setComponents(view.components);
-      } else {
-        setComponents([]);
+        const data = await api.changeActiveDashboard(dashboardId);
+        if(data){
+          setWidgets(data);
+          setLayoutLoaded(true); // Mark layout as loaded after widgets are set
+        }
       }
     } catch (error) {
-      console.error('Error loading view:', error);
+      console.error('Error loading dashboard:', error);
     }
   };
 
-  const loadRefreshTimes = async () => {
+  const loadDashboards = async() => {
     try {
-      const times = await api.getRefreshTimes();
-      const time = times[currentViewId];
-      setRefreshTime(parseRefreshTime(time));
+      const data = await api.getDashboards();
+      if(data){
+        setDashboards(data);
+        return data;
+      }
+      return [];
     } catch (error) {
-      console.error('Error loading refresh times:', error);
+      console.error('Error loading dashboard:', error);
+      return [];
     }
   };
 
   const parseRefreshTime = (refreshString) => {
     if (!refreshString || refreshString === '0') return 0;
-    
+
     const unit = refreshString.slice(-1);
     const value = parseInt(refreshString.slice(0, -1));
     
@@ -82,69 +110,209 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
     return value * (multipliers[unit] || 1);
   };
 
-  const handleViewChange = (e) => {
-    const newViewId = parseInt(e.target.value);
-    setCurrentViewId(newViewId);
-    
-    // Dispatch event for external listeners (PHP buttons)
-    window.dispatchEvent(new CustomEvent('dashboardViewChanged', {
-      detail: { viewId: newViewId }
-    }));
+  const saveLayoutsToBackend = async (dashboardId, widgetsPositionalInformation) => {
+        try {
+            await api.updateWidgetLayouts(dashboardId, widgetsPositionalInformation);
+        } catch (error) {
+            console.error('Error updating layout:', error);
+        }
+    };
+
+  const debouncedSaveLayout = useCallback(
+        debounce((widgetsPositionalInformation) => {
+            saveLayoutsToBackend(currentDashboardId, widgetsPositionalInformation);
+        }, 1000), 
+        [currentDashboardId] // Recreate the debounced function if the current dashboard changes
+    );
+
+    // 3. Cleanup effect for the debounced function
+    useEffect(() => {
+        return () => {
+            // Cancel any pending debounced call when the component unmounts
+            // or when currentDashboardId changes and debouncedSaveLayout is recreated
+            debouncedSaveLayout.cancel();
+        };
+    }, [debouncedSaveLayout]);
+
+    useEffect(() => {
+        return () => {
+            // Cancel any pending debounced call when the component unmounts
+            // or when currentDashboardId changes and debouncedSaveLayout is recreated
+            debouncedSaveLayout.cancel();
+        };
+    }, [debouncedSaveLayout]);
+
+  const handleDashboardChange = (e) => {
+    const newDashboardId = parseInt(e.target.value);
+    setCurrentDashboardId(newDashboardId);
+  };
+
+  const handleCreateDashboard = () => {
+    setModalState({
+      isOpen: true,
+      mode: 'create',
+      dashboard: null
+    });
+  };
+
+  const handleUpdateDashboard = () => {
+    const currentDashboard = dashboards.find(d => d.id === parseInt(currentDashboardId));
+    if (currentDashboard) {
+      setModalState({
+        isOpen: true,
+        mode: 'edit',
+        dashboard: currentDashboard
+      });
+    }
+  };
+
+  const handleDeleteDashboard = () => {
+    if (dashboards.length === 1) {
+      alert('Cannot delete the last dashboard');
+      return;
+    }
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await api.deleteDashboard(currentDashboardId);
+      
+      // Refresh dashboards list
+      const updatedDashboards = await api.getDashboards();
+      setDashboards(updatedDashboards);
+      
+      // Set to first available dashboard
+      const newActiveDashboard = updatedDashboards[0];
+      if (newActiveDashboard) {
+        setCurrentDashboardId(newActiveDashboard.id);
+      }
+      
+      setDeleteConfirmOpen(false);
+    } catch (error) {
+      console.error('Error deleting dashboard:', error);
+      alert('Failed to delete dashboard');
+    }
+  };
+
+  const handleModalSubmit = async (formData) => {
+    try {
+      if (modalState.mode === 'create') {
+        // Create new dashboard
+        const newDashboard = await api.createDashboard(formData);
+        
+        // Refresh dashboards list
+        const updatedDashboards = await api.getDashboards();
+        setDashboards(updatedDashboards);
+        
+        // Switch to the new dashboard
+        setCurrentDashboardId(newDashboard.id);
+      } else if (modalState.mode === 'edit') {
+        // Update existing dashboard
+        await api.updateDashboard(currentDashboardId, formData);
+        
+        // Refresh dashboards list
+        const updatedDashboards = await api.getDashboards();
+        setDashboards(updatedDashboards);
+        
+        // Update refresh time if it changed
+        setRefreshTime(parseRefreshTime(formData.refresh_time));
+      }
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      alert('Failed to save dashboard');
+    }
   };
 
   const handleAddWidget = async () => {
     try {
-      const newConfig = {
-        name: 'New Component',
-        width: ''
-      };
-      
-      const result = await api.createComponent(
-        currentViewId, 
-        newConfig, 
-        components.length
+      const result = await api.createWidget(
+        currentDashboardId, 
+        {title: 'New Widget', chart_type: null}  
       );
-      
-      if (result) {
-        loadView(currentViewId, false);
+      console.log(widgets);
+      if (result && result.widget) {
+        // Add the new widget to the state instead of reloading
+        setWidgets(prevWidgets => [...prevWidgets, result.widget]);
       }
     } catch (error) {
       console.error('Error adding widget:', error);
     }
   };
 
-  const handleWidgetUpdate = () => {
-    loadView(currentViewId, false);
+  const handleWidgetUpdate = (updatedWidget) => {
+    setWidgets(prevWidgets => 
+      prevWidgets.map(w => 
+        w.id === updatedWidget.id ? updatedWidget : w
+      )
+    );
   };
 
-  const handleWidgetDelete = (componentId) => {
-    setComponents(components.filter(c => c.id !== componentId));
+  const handleWidgetDelete = (widgetId) => {
+    setWidgets(widgets.filter(w => w.id !== widgetId));
   };
 
   const handleLayoutChange = async (layout) => {
-    // Map layout changes back to component order
-    const order = layout.map((item, index) => ({
-      id: item.i,
-      order: index
-    }));
-
-    try {
-      await api.updateComponentOrder(currentViewId, order);
-    } catch (error) {
-      console.error('Error updating layout:', error);
+    // Only save layout changes if the initial layout has been loaded
+    // This prevents saving the default layout on initial render
+    if (!layoutLoaded) {
+      return;
     }
+
+    // Map layout changes to widget layout data
+    const widgetsPositionalInformation = layout.map(item => ({
+      widget_id: parseInt(item.i),
+      x: item.x,
+      y: item.y,
+      w: item.w,
+      h: item.h
+    }));
+    
+    // Update widget state with new layout information
+    setWidgets(prevWidgets => 
+      prevWidgets.map(widget => {
+        const layoutItem = layout.find(item => parseInt(item.i) === widget.id);
+        if (layoutItem) {
+          return {
+            ...widget,
+            layout: {
+              x: layoutItem.x,
+              y: layoutItem.y,
+              w: layoutItem.w,
+              h: layoutItem.h
+            }
+          };
+        }
+        return widget;
+      })
+    );
+    
+    debouncedSaveLayout(widgetsPositionalInformation);
   };
 
   const getLayout = () => {
-    return components.map((component, index) => {
-      const config = JSON.parse(component.config || '{}');
-      const width = getWidthFromConfig(config.width);
+    return widgets.map((widget, index) => {
+      const layout = widget.layout || '{}';
       
+      // Check if widget has saved layout data
+      if (layout && typeof layout === 'object') {
+        return {
+          i: widget.id.toString(),
+          x: layout.x ?? (index % 4) * 3,
+          y: layout.y ?? Math.floor(index / 4) * 4,
+          w: layout.w ?? 4,
+          h: layout.h ?? 4,
+          minW: 3,
+          minH: 3
+        };
+      }
+      
+      // Fallback to default layout
       return {
-        i: component.id.toString(),
+        i: widget.id.toString(),
         x: (index % 4) * 3,
         y: Math.floor(index / 4) * 4,
-        w: width,
+        w: 4,
         h: 4,
         minW: 3,
         minH: 3
@@ -152,58 +320,10 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
     });
   };
 
-  const getWidthFromConfig = (widthClass) => {
-    const widthMap = {
-      '': 3,      // 25%
-      'width2': 6,  // 50%
-      'width3': 9,  // 75%
-      'width4': 12  // 100%
-    };
-    return widthMap[widthClass] || 3;
-  };
 
-  const currentView = views.find(v => v.id === parseInt(currentViewId));
-  const visibleComponents = components.filter(c => c.view_id === parseInt(currentViewId));
+  // const currentDashboard = dashboards.find(d => d.id === parseInt(currentDashboardId));
+  const visibleWidgets = widgets.filter(w => w.dashboard_id === parseInt(currentDashboardId));
 
-  const handleCreateView = () => {
-    // Get URLs from window.dashboardConfig
-    const config = window.dashboardConfig || {};
-    const createUrl = config.urls?.createView || `/view/create`;
-    window.location.href = createUrl;
-  };
-
-  const handleUpdateView = () => {
-    const config = window.dashboardConfig || {};
-    const updateUrl = config.urls?.updateView || `/view/update?id=${currentViewId}`;
-    window.location.href = updateUrl;
-  };
-
-  const handleDeleteView = () => {
-    if (!confirm('Are you sure you want to delete this dashboard?')) {
-      return;
-    }
-    
-    const config = window.dashboardConfig || {};
-    const deleteUrl = config.urls?.deleteView || `/view/delete?id=${currentViewId}`;
-    
-    // Create a form to submit DELETE request
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = deleteUrl;
-    
-    // Add CSRF token if available
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (csrfToken) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = '_csrf';
-      input.value = csrfToken;
-      form.appendChild(input);
-    }
-    
-    document.body.appendChild(form);
-    form.submit();
-  };
 
   return (
     <div className="dashboard-container">
@@ -215,13 +335,13 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
             </label>
             <select 
               id="dashboard-selector"
-              value={currentViewId} 
-              onChange={handleViewChange}
+              value={currentDashboardId} 
+              onChange={handleDashboardChange}
               className="dashboard-select"
             >
-              {views.map(view => (
-                <option key={view.id} value={view.id}>
-                  {view.name}
+              {dashboards.map(dashboard => (
+                <option key={dashboard.id} value={dashboard.id}>
+                  {dashboard.name}
                 </option>
               ))}
             </select>
@@ -230,29 +350,37 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
         
         <div className="dashboard-actions">
           <button 
-            className="dashboard-action-btn create-btn"
-            onClick={handleCreateView}
-            title="Create New Dashboard"
+            className={`dashboard-action-btn ${isViewMode ? 'edit-mode-btn' : 'view-mode-btn'}`}
+            onClick={() => setIsViewMode(!isViewMode)}
+            title={isViewMode ? "Switch to Edit Mode" : "Switch to View Mode"}
           >
-            <i className="material-icons">add</i>
+            <span>{isViewMode ? 'Edit Mode' : 'View Mode'}</span>
+          </button>
+          
+          <button 
+            className="dashboard-action-btn create-btn"
+            onClick={handleCreateDashboard}
+            title="Create New Dashboard"
+            disabled={isViewMode}
+          >            
             <span>New</span>
           </button>
           
           <button 
             className="dashboard-action-btn update-btn"
-            onClick={handleUpdateView}
+            onClick={handleUpdateDashboard}
             title="Edit Dashboard"
+            disabled={isViewMode}
           >
-            <i className="material-icons">edit</i>
             <span>Edit</span>
           </button>
           
           <button 
             className="dashboard-action-btn delete-btn"
-            onClick={handleDeleteView}
+            onClick={handleDeleteDashboard}
             title="Delete Dashboard"
+            disabled={isViewMode}
           >
-            <i className="material-icons">delete</i>
             <span>Delete</span>
           </button>
         </div>
@@ -266,17 +394,20 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
           rowHeight={80}
           onLayoutChange={handleLayoutChange}
-          draggableHandle=".widget-header"
+          draggableHandle=".widget-drag-handle"
           compactType="vertical"
+          isDraggable={!isViewMode}
+          isResizable={!isViewMode}
+          static={isViewMode}
+          
         >
-          {visibleComponents.map(component => (
-            <div key={component.id.toString()}>
+          {visibleWidgets.map(widget => (
+            <div key={widget.id.toString()}>
               <WidgetCard
-                component={component}
-                filters={filters}
-                tableColumns={tableColumns}
-                onUpdate={handleWidgetUpdate}
+                widget={widget}
+                onWidgetUpdate={handleWidgetUpdate}
                 onDelete={handleWidgetDelete}
+                isViewMode={isViewMode}
               />
             </div>
           ))}
@@ -287,9 +418,41 @@ const Dashboard = ({ views, activeViewId, filters, tableColumns }) => {
         className="add-widget-fab"
         onClick={handleAddWidget}
         title="Add Widget"
+        disabled={isViewMode}
+        style={{ display: isViewMode ? 'none' : 'flex' }}
       >
-        <i className="material-icons">add</i>
       </button>
+
+      <DashboardModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        onSubmit={handleModalSubmit}
+        dashboard={modalState.dashboard}
+        mode={modalState.mode}
+      />
+
+      {deleteConfirmOpen && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirmOpen(false)}>
+          <div className="modal-content delete-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirm Delete</h2>
+              <button className="modal-close-btn" onClick={() => setDeleteConfirmOpen(false)}>
+              </button>
+            </div>
+            <div className="modal-form">
+              <p>Are you sure you want to delete this dashboard? This action cannot be undone.</p>
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={() => setDeleteConfirmOpen(false)}>
+                  Cancel
+                </button>
+                <button className="btn-danger" onClick={confirmDelete}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

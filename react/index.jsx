@@ -2,35 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import Dashboard from './components/Dashboard';
 import './index.css';
+import api from './services/api';
 
-const initDashboard = () => {
+const initDashboard = async () => {
   const container = document.getElementById('react-dashboard-root');
   
   if (!container) {
     console.error('Dashboard container not found!');
     return;
   }
-
-  const config = window.dashboardConfig || {};
-  console.log(config)
-  const {
-    views = [],
-    activeViewId = null,
-    filters = [],
-    tableColumns = {}
-  } = config;
-
+  
   const root = ReactDOM.createRoot(container);
   root.render(
-    <React.StrictMode>
-      
       <Dashboard
-        views={views}
-        activeViewId={activeViewId}
-        filters={filters}
-        tableColumns={tableColumns}
       />
-    </React.StrictMode>
   );
 };
 

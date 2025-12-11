@@ -103,9 +103,6 @@
   transform: translateY(0);
 }
 
-.dashboard-action-btn .material-icons {
-  font-size: 18px;
-}
 
 .dashboard-action-btn.create-btn {
   background: #4CAF50;
@@ -129,6 +126,33 @@
 
 .dashboard-action-btn.delete-btn:hover {
   background: #da190b;
+}
+
+.dashboard-action-btn.view-mode-btn {
+  background: #FF9800;
+}
+
+.dashboard-action-btn.view-mode-btn:hover {
+  background: #F57C00;
+}
+
+.dashboard-action-btn.edit-mode-btn {
+  background: #9C27B0;
+}
+
+.dashboard-action-btn.edit-mode-btn:hover {
+  background: #7B1FA2;
+}
+
+.dashboard-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.dashboard-action-btn:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Dashboard Grid */
@@ -216,10 +240,6 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
-.add-widget-fab .material-icons {
-  font-size: 28px;
-}
-
 /* Empty State */
 .dashboard-empty {
   display: flex;
@@ -231,12 +251,6 @@
   text-align: center;
 }
 
-.dashboard-empty .material-icons {
-  font-size: 72px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
 .dashboard-empty h3 {
   font-size: 24px;
   margin-bottom: 8px;
@@ -246,6 +260,35 @@
 .dashboard-empty p {
   font-size: 16px;
   margin-bottom: 24px;
+}
+
+/* Delete Confirmation Modal */
+.delete-confirm {
+  max-width: 450px;
+}
+
+.delete-confirm .modal-form p {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.btn-danger {
+  background-color: #f44336;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #d32f2f;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
 /* Responsive Design */
@@ -296,18 +339,10 @@
     width: 48px;
     height: 48px;
   }
-
-  .add-widget-fab .material-icons {
-    font-size: 24px;
-  }
 }
 
 @media (max-width: 480px) {
   .dashboard-action-btn {
     padding: 8px;
-  }
-
-  .dashboard-action-btn .material-icons {
-    font-size: 20px;
   }
 }

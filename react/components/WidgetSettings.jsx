@@ -1,59 +1,354 @@
 import React, { useState } from 'react';
+import Select from 'react-select';
+import { useWidgetSettingsForm } from '../hooks/useWidgetSettingsForm';
+import './WidgetSettings.css';
 
-const WidgetSettings = ({ component, config, onSave, onDelete, onClose }) => {
-  const [name, setName] = useState(config.name || '');
-  const [width, setWidth] = useState(config.width || '');
+const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
+  const {
+    formData,
+    filters,
+    isLoadingFilters,
+    availableVariables,
+    isLoadingVariables,
+    updateFormField,
+    updateConfigField,
+    getSubmitPayload
+  } = useWidgetSettingsForm(widget, config);
+
+  // Tab state: 'all', 'categorical', 'continuous'
+  const [activeTab, setActiveTab] = useState('all');
+  
+  // Timeframe mode: 'preset' or 'manual'
+  const [timeframeMode, setTimeframeMode] = useState('preset');
+
+  // Chart type definitions with categories
+  const chartTypes = {
+    barChart: { label: 'Bar Chart', icon: 'chart-icon-bar', category: 'categorical' },
+    pieChart: { label: 'Pie Chart', icon: 'chart-icon-pie', category: 'categorical' },
+    lineChart: { label: 'Line Chart', icon: 'chart-icon-line', category: 'continuous' },
+    table: { label: 'Table', icon: 'chart-icon-table', category: 'all' }
+  };
+
+  // Filter chart types based on active tab
+  const getVisibleChartTypes = () => {
+    if (activeTab === 'all') {
+      return Object.entries(chartTypes);
+    }
+    return Object.entries(chartTypes).filter(([_, chart]) => 
+      chart.category === activeTab || chart.category === 'all'
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ name, width });
+    onSave(getSubmitPayload());
   };
 
-  const widthOptions = [
-    { value: '', label: '25%' },
-    { value: 'width2', label: '50%' },
-    { value: 'width3', label: '75%' },
-    { value: 'width4', label: '100%' }
-  ];
+
+  // Track if a chart type has been selected
+  const isChartSelected = formData.chartType !== '';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h4>{name || 'Widget'} - Options</h4>
+          <h4>{formData.title || 'Widget'} - Options</h4>
           <button className="modal-close" onClick={onClose}>
-            <i className="material-icons">close</i>
           </button>
         </div>
         
         <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            <div className="form-group">
-              <label htmlFor="widgetName">Name</label>
-              <input
-                id="widgetName"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Widget name"
-                required
-              />
+          <div className={`modal-body-container ${isChartSelected ? 'two-panel' : ''}`}>
+            {/* Left Panel - Basic Settings */}
+            <div className="settings-panel-left">
+              <div className="form-group">
+                <label htmlFor="widgetTitle">Title</label>
+                <input
+                  id="widgetTitle"
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => updateFormField('title', e.target.value)}
+                  placeholder="Widget title"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="widgetFilter">Filter</label>
+                {isLoadingFilters ? (
+                  <div>Loading filters...</div>
+                ) : (
+                  <select 
+                    id="widgetFilter"
+                    value={formData.filterId} 
+                    onChange={(e) => updateFormField('filterId', e.target.value)}
+                  >
+                    <option value="">No Filter</option>
+                    {filters.map(filter => (
+                      <option key={filter.id} value={filter.id}>
+                        {filter.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Chart Type</label>
+                
+                {/* Tabs for filtering chart types */}
+                <div className="widget-settings-tabs">
+                  <button
+                    type="button"
+                    className={`widget-settings-tab ${activeTab === 'all' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    className={`widget-settings-tab ${activeTab === 'categorical' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('categorical')}
+                  >
+                    Categorical
+                  </button>
+                  <button
+                    type="button"
+                    className={`widget-settings-tab ${activeTab === 'continuous' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('continuous')}
+                  >
+                    Continuous
+                  </button>
+                </div>
+
+                {/* Chart type selector with icons */}
+                <div className="chart-type-selector">
+                  {getVisibleChartTypes().map(([type, chart]) => (
+                    <div
+                      key={type}
+                      className={`chart-type-option ${formData.chartType === type ? 'selected' : ''}`}
+                      onClick={() => updateFormField('chartType', type)}
+                    >
+                      <div className={`chart-type-icon ${chart.icon}`}></div>
+                      <div className="chart-type-label">{chart.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="widgetWidth">Width</label>
-              <select 
-                id="widgetWidth"
-                value={width} 
-                onChange={(e) => setWidth(e.target.value)}
-              >
-                {widthOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Right Panel - Chart Configuration */}
+            {isChartSelected && (
+              <div className="settings-panel-right">
+                <div className="panel-title">Chart Configuration</div>
+
+                <div className="form-group">
+                  <label htmlFor="widgetTimeframe">Timeframe</label>
+                  
+                  {/* Mode Toggle */}
+                  <div className="timeframe-mode-toggle">
+                    <button
+                      type="button"
+                      className={`timeframe-mode-btn ${timeframeMode === 'preset' ? 'active' : ''}`}
+                      onClick={() => setTimeframeMode('preset')}
+                    >
+                      Presets
+                    </button>
+                    <button
+                      type="button"
+                      className={`timeframe-mode-btn ${timeframeMode === 'manual' ? 'active' : ''}`}
+                      onClick={() => setTimeframeMode('manual')}
+                    >
+                      Manual
+                    </button>
+                  </div>
+
+                  {/* Preset Slider Mode */}
+                  {timeframeMode === 'preset' && (
+                    <div className="timeframe-slider-container">
+                      <input
+                        id="widgetTimeframe"
+                        type="range"
+                        min="0"
+                        max="4"
+                        value={['1D', '1W', '1M', '3M', '1Y'].indexOf(formData.timeframe)}
+                        onChange={(e) => {
+                          const timeframes = ['1D', '1W', '1M', '3M', '1Y'];
+                          updateFormField('timeframe', timeframes[parseInt(e.target.value)]);
+                        }}
+                        className="timeframe-slider"
+                      />
+                      <div className="timeframe-labels">
+                        <span>1 Day</span>
+                        <span>1 Week</span>
+                        <span>1 Month</span>
+                        <span>3 Months</span>
+                        <span>1 Year</span>
+                      </div>
+                      <div className="timeframe-value">
+                        {formData.timeframe === '1D' && '1 Day'}
+                        {formData.timeframe === '1W' && '1 Week'}
+                        {formData.timeframe === '1M' && '1 Month'}
+                        {formData.timeframe === '3M' && '3 Months'}
+                        {formData.timeframe === '1Y' && '1 Year'}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual Input Mode */}
+                  {timeframeMode === 'manual' && (
+                    <div className="timeframe-manual-input-container">
+                      <input
+                        type="text"
+                        value={formData.timeframe}
+                        onChange={(e) => updateFormField('timeframe', e.target.value.toUpperCase())}
+                        placeholder="e.g. 5D, 2W, 6M, 1Y"
+                        maxLength="10"
+                        className="timeframe-manual-input"
+                      />
+                      <span className="timeframe-manual-hint">Custom timeframe (5D, 2W, 6M, 1Y, etc.)</span>
+                      <div className="timeframe-value">
+                        {formData.timeframe}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chart-specific config options */}
+                {formData.chartType === 'pieChart' && (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="pieChartVariable">Pie Chart Variable (Select One)</label>
+                      {isLoadingVariables ? (
+                        <div></div>
+                      ) : (
+                        <Select
+                          id="pieChartVariable"
+                          value={availableVariables
+                            .map(v => ({ value: v, label: v }))
+                            .find(option => option.value === formData.config.pie_chart_variable)}
+                          onChange={(selected) => updateConfigField('pie_chart_variable', selected?.value || '')}
+                          options={availableVariables.map(v => ({ value: v, label: v }))}
+                          isClearable
+                          placeholder="Search and select a variable..."
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: '38px'
+                            })
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.config.show_labels}
+                          onChange={(e) => updateConfigField('show_labels', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        Show Labels
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {formData.chartType === 'barChart' && (
+                  <div className="form-group">
+                    <label htmlFor="barChartVariable">Bar Chart Variable (Select One)</label>
+                    {isLoadingVariables ? (
+                      <div>Loading variables...</div>
+                    ) : (
+                      <Select
+                        id="barChartVariable"
+                        value={availableVariables
+                          .map(v => ({ value: v, label: v }))
+                          .find(option => option.value === formData.config.bar_chart_variable)}
+                        onChange={(selected) => updateConfigField('bar_chart_variable', selected?.value || '')}
+                        options={availableVariables.map(v => ({ value: v, label: v }))}
+                        isClearable
+                        placeholder="Search and select a variable..."
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            minHeight: '38px'
+                          })
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {formData.chartType === 'lineChart' && (
+                  <div className="form-group">
+                    <label htmlFor="granularity">Granularity</label>
+                    <div className="granularity-slider-container">
+                      <input
+                        id="granularity"
+                        type="range"
+                        min="0"
+                        max="4"
+                        value={['1h', '6h', '12h', '1d', '1w'].indexOf(formData.config.granularity)}
+                        onChange={(e) => {
+                          const granularities = ['1h', '6h', '12h', '1d', '1w'];
+                          updateConfigField('granularity', granularities[parseInt(e.target.value)]);
+                        }}
+                        className="granularity-slider"
+                      />
+                      <div className="granularity-labels">
+                        <span>1h</span>
+                        <span>6h</span>
+                        <span>12h</span>
+                        <span>1d</span>
+                        <span>1w</span>
+                      </div>
+                      <div className="granularity-value">
+                        {formData.config.granularity === '1h' && 'Hourly'}
+                        {formData.config.granularity === '6h' && '6 Hourly'}
+                        {formData.config.granularity === '12h' && '12 Hourly'}
+                        {formData.config.granularity === '1d' && 'Daily'}
+                        {formData.config.granularity === '1w' && 'Weekly'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {formData.chartType === 'table' && (
+                  <div className="form-group">
+                    <label htmlFor="tableColumns">Table Columns (Select Multiple)</label>
+                    {isLoadingVariables ? (
+                      <div>Loading columns...</div>
+                    ) : (
+                      <>
+                        <Select
+                          id="tableColumns"
+                          value={formData.config.table_columns
+                            .map(v => ({ value: v, label: v }))}
+                          onChange={(selected) => updateConfigField('table_columns', selected ? selected.map(s => s.value) : [])}
+                          options={availableVariables.map(v => ({ value: v, label: v }))}
+                          isMulti
+                          isClearable
+                          placeholder="Search and select columns..."
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: '38px'
+                            }),
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                          }}
+                          menuPortalTarget={document.body}
+                        />
+                        <small style={{ display: 'block', marginTop: '4px', color: '#666' }}>
+                          Select multiple columns for your table
+                        </small>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="modal-footer">
