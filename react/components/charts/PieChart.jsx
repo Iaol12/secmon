@@ -28,7 +28,6 @@ const PieChart = ({ data, config }) => {
     );
   }
 
-  // Transform data to format expected by Recharts
   const chartData = data.map(item => ({
     name: item.label || item.x || 'Unknown',
     value: item.count || item.y || 0

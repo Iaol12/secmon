@@ -49,7 +49,6 @@ const WidgetCard = ({
     try {
       const result = await api.updateWidgetSettings(newConfig);
       if (result.success && result.widget) {
-        // Update the widget in parent state
         onWidgetUpdate(result.widget);
         setShowSettings(false);
       }

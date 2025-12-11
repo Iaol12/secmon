@@ -6,20 +6,14 @@ import api from './services/api';
 
 const initDashboard = async () => {
   const container = document.getElementById('react-dashboard-root');
-  
   if (!container) {
     console.error('Dashboard container not found!');
     return;
   }
-  
   const root = ReactDOM.createRoot(container);
-  root.render(
-      <Dashboard
-      />
-  );
+  root.render(<Dashboard />);
 };
 
-// Wait for DOM to be ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDashboard);
 } else {

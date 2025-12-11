@@ -25,7 +25,6 @@ const BarChart = ({ data }) => {
     );
   }
 
-  // Transform data to format expected by Recharts
   const chartData = data.map(item => ({
     name: item.x || item.label || 'Unknown',
     value: item.y || item.count || 0

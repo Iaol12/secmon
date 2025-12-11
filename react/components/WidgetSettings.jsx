@@ -15,13 +15,8 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
     getSubmitPayload
   } = useWidgetSettingsForm(widget, config);
 
-  // Tab state: 'all', 'categorical', 'continuous'
   const [activeTab, setActiveTab] = useState('all');
-  
-  // Timeframe mode: 'preset' or 'manual'
   const [timeframeMode, setTimeframeMode] = useState('preset');
-
-  // Chart type definitions with categories
   const chartTypes = {
     barChart: { label: 'Bar Chart', icon: 'chart-icon-bar', category: 'categorical' },
     pieChart: { label: 'Pie Chart', icon: 'chart-icon-pie', category: 'categorical' },
@@ -29,7 +24,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
     table: { label: 'Table', icon: 'chart-icon-table', category: 'all' }
   };
 
-  // Filter chart types based on active tab
   const getVisibleChartTypes = () => {
     if (activeTab === 'all') {
       return Object.entries(chartTypes);
@@ -44,8 +38,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
     onSave(getSubmitPayload());
   };
 
-
-  // Track if a chart type has been selected
   const isChartSelected = formData.chartType !== '';
 
   return (
@@ -59,7 +51,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
         
         <form onSubmit={handleSubmit}>
           <div className={`modal-body-container ${isChartSelected ? 'two-panel' : ''}`}>
-            {/* Left Panel - Basic Settings */}
             <div className="settings-panel-left">
               <div className="form-group">
                 <label htmlFor="widgetTitle">Title</label>
@@ -121,7 +112,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                   </button>
                 </div>
 
-                {/* Chart type selector with icons */}
                 <div className="chart-type-selector">
                   {getVisibleChartTypes().map(([type, chart]) => (
                     <div
@@ -137,15 +127,12 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
               </div>
             </div>
 
-            {/* Right Panel - Chart Configuration */}
             {isChartSelected && (
               <div className="settings-panel-right">
                 <div className="panel-title">Chart Configuration</div>
 
                 <div className="form-group">
                   <label htmlFor="widgetTimeframe">Timeframe</label>
-                  
-                  {/* Mode Toggle */}
                   <div className="timeframe-mode-toggle">
                     <button
                       type="button"
@@ -163,7 +150,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                     </button>
                   </div>
 
-                  {/* Preset Slider Mode */}
                   {timeframeMode === 'preset' && (
                     <div className="timeframe-slider-container">
                       <input
@@ -195,7 +181,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                     </div>
                   )}
 
-                  {/* Manual Input Mode */}
                   {timeframeMode === 'manual' && (
                     <div className="timeframe-manual-input-container">
                       <input

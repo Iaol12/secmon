@@ -7,9 +7,8 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
-      // Map all requests starting with /api to your backend
       '/api': {
-        target: 'https://localhost:8445',
+        target: 'https://localhost:8443',
         changeOrigin: true,
         secure: false,
         rejectUnauthorized: false,

@@ -1,9 +1,4 @@
-tuna pocuvaj komentare 
-```
-// const API_BASE_URL = window.location.origin + '/api/dashboard';
-
-const API_BASE_URL =  'https://localhost:8445/api/dashboard';
-
+api base nemusis menit
   
 
 class DashboardAPI {

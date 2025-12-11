@@ -28,27 +28,25 @@ const Dashboard = () => {
 
   useEffect(() => {
       const initialize = async () => {
-          const dbs = await loadDashboards(); // Assuming loadDashboards now returns the data
+          const dbs = await loadDashboards();
           if (dbs && dbs.length > 0) {
               const activeDashboardId = dbs.find(d => d.active)?.id || dbs[0].id;
               setCurrentDashboardId(activeDashboardId);
           }
       };
       initialize();
-  }, []); // Empty dependency array is fine here
+  }, []);
 
   useEffect(() => {
       if (currentDashboardId) {
           loadDashboard(currentDashboardId);
-          // Now find the dashboard from the 'dashboards' state which is guaranteed to be loaded
           const currentDb = dashboards.find(d => d.id === parseInt(currentDashboardId));
           setRefreshTime(parseRefreshTime(currentDb?.refresh_time));
-          setLayoutLoaded(false); // Reset layout loaded state when dashboard changes
+          setLayoutLoaded(false);
       }
-  }, [currentDashboardId, dashboards]); // Add 'dashboards' as a dependency here
+  }, [currentDashboardId, dashboards]);
 
   useEffect(() => {
-    // Setup auto-refresh
     if (refreshInterval) {
       clearInterval(refreshInterval);
     }
@@ -69,7 +67,7 @@ const Dashboard = () => {
         const data = await api.changeActiveDashboard(dashboardId);
         if(data){
           setWidgets(data);
-          setLayoutLoaded(true); // Mark layout as loaded after widgets are set
+          setLayoutLoaded(true);
         }
       }
     } catch (error) {
@@ -122,22 +120,11 @@ const Dashboard = () => {
         debounce((widgetsPositionalInformation) => {
             saveLayoutsToBackend(currentDashboardId, widgetsPositionalInformation);
         }, 1000), 
-        [currentDashboardId] // Recreate the debounced function if the current dashboard changes
+        [currentDashboardId]
     );
 
-    // 3. Cleanup effect for the debounced function
     useEffect(() => {
         return () => {
-            // Cancel any pending debounced call when the component unmounts
-            // or when currentDashboardId changes and debouncedSaveLayout is recreated
-            debouncedSaveLayout.cancel();
-        };
-    }, [debouncedSaveLayout]);
-
-    useEffect(() => {
-        return () => {
-            // Cancel any pending debounced call when the component unmounts
-            // or when currentDashboardId changes and debouncedSaveLayout is recreated
             debouncedSaveLayout.cancel();
         };
     }, [debouncedSaveLayout]);
@@ -177,17 +164,12 @@ const Dashboard = () => {
   const confirmDelete = async () => {
     try {
       await api.deleteDashboard(currentDashboardId);
-      
-      // Refresh dashboards list
       const updatedDashboards = await api.getDashboards();
       setDashboards(updatedDashboards);
-      
-      // Set to first available dashboard
       const newActiveDashboard = updatedDashboards[0];
       if (newActiveDashboard) {
         setCurrentDashboardId(newActiveDashboard.id);
       }
-      
       setDeleteConfirmOpen(false);
     } catch (error) {
       console.error('Error deleting dashboard:', error);
@@ -198,24 +180,14 @@ const Dashboard = () => {
   const handleModalSubmit = async (formData) => {
     try {
       if (modalState.mode === 'create') {
-        // Create new dashboard
         const newDashboard = await api.createDashboard(formData);
-        
-        // Refresh dashboards list
         const updatedDashboards = await api.getDashboards();
         setDashboards(updatedDashboards);
-        
-        // Switch to the new dashboard
         setCurrentDashboardId(newDashboard.id);
       } else if (modalState.mode === 'edit') {
-        // Update existing dashboard
         await api.updateDashboard(currentDashboardId, formData);
-        
-        // Refresh dashboards list
         const updatedDashboards = await api.getDashboards();
         setDashboards(updatedDashboards);
-        
-        // Update refresh time if it changed
         setRefreshTime(parseRefreshTime(formData.refresh_time));
       }
     } catch (error) {
@@ -230,9 +202,7 @@ const Dashboard = () => {
         currentDashboardId, 
         {title: 'New Widget', chart_type: null}  
       );
-      console.log(widgets);
       if (result && result.widget) {
-        // Add the new widget to the state instead of reloading
         setWidgets(prevWidgets => [...prevWidgets, result.widget]);
       }
     } catch (error) {
@@ -253,13 +223,9 @@ const Dashboard = () => {
   };
 
   const handleLayoutChange = async (layout) => {
-    // Only save layout changes if the initial layout has been loaded
-    // This prevents saving the default layout on initial render
     if (!layoutLoaded) {
       return;
     }
-
-    // Map layout changes to widget layout data
     const widgetsPositionalInformation = layout.map(item => ({
       widget_id: parseInt(item.i),
       x: item.x,
@@ -267,8 +233,6 @@ const Dashboard = () => {
       w: item.w,
       h: item.h
     }));
-    
-    // Update widget state with new layout information
     setWidgets(prevWidgets => 
       prevWidgets.map(widget => {
         const layoutItem = layout.find(item => parseInt(item.i) === widget.id);
@@ -293,8 +257,6 @@ const Dashboard = () => {
   const getLayout = () => {
     return widgets.map((widget, index) => {
       const layout = widget.layout || '{}';
-      
-      // Check if widget has saved layout data
       if (layout && typeof layout === 'object') {
         return {
           i: widget.id.toString(),
@@ -306,8 +268,6 @@ const Dashboard = () => {
           minH: 3
         };
       }
-      
-      // Fallback to default layout
       return {
         i: widget.id.toString(),
         x: (index % 4) * 3,
@@ -320,8 +280,6 @@ const Dashboard = () => {
     });
   };
 
-
-  // const currentDashboard = dashboards.find(d => d.id === parseInt(currentDashboardId));
   const visibleWidgets = widgets.filter(w => w.dashboard_id === parseInt(currentDashboardId));
 
 
