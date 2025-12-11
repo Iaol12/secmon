@@ -88,10 +88,10 @@ class DashboardWidgetController extends Controller
         $chartType = $widget->chart_type;
         $timeframe = $widget->timeframe ?? "";
 
+        $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
         switch ($chartType) {
             case "pieChart":
                 // Parse config to get the field to chart
-                $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
                 $field = $config['pie_chart_variable'] ?? 'cef_severity';
                 
                 return [
@@ -102,7 +102,6 @@ class DashboardWidgetController extends Controller
                 
             case "barChart":
                 // Parse config to get the field to chart
-                $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
                 $field = $config['bar_chart_variable'] ?? 'cef_severity';
                 
                 return [
@@ -112,10 +111,11 @@ class DashboardWidgetController extends Controller
                 ];
                 
             case "lineChart":
+                $granularity = $config['granularity'] ?? '6H';
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe, $granularity)
                 ];
                 
             case "table":
@@ -225,6 +225,13 @@ class DashboardWidgetController extends Controller
                     $config = $configArray;
                 } else {
                     throw new \yii\web\BadRequestHttpException('Invalid variable for bar chart configuration.');
+                }
+            }
+            elseif($chartType == 'lineChart') {
+                if (!empty($configArray['granularity']) && $this->chartDataService->isValidISO8601($configArray['granularity'])) {
+                    $config = $configArray;
+                } else {
+                    throw new \yii\web\BadRequestHttpException('Invalid time granularity for line chart configuration.');
                 }
             }
 
