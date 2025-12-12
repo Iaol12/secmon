@@ -276,13 +276,32 @@ class DashboardController extends Controller
         // Basic check: ensure widget's parent dashboard belongs to the user
         $this->findModel($widget->dashboard_id);
 
-        if ($widget->delete()) {
-            Yii::$app->response->statusCode = 204; // No Content
-            return true;
+        $transaction = Yii::$app->db->beginTransaction();
+        
+        try {
+            // Delete associated layout first due to foreign key constraint
+            if ($widget->layout) {
+                $widget->layout->delete();
+            }
+            
+            // Now delete the widget
+            if ($widget->delete()) {
+                $transaction->commit();
+                Yii::$app->response->statusCode = 204; // No Content
+                return true;
+            }
+            
+            $transaction->rollBack();
+            Yii::$app->response->statusCode = 500;
+            return false;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Failed to delete widget: ' . $e->getMessage()
+            ];
         }
-
-        Yii::$app->response->statusCode = 500;
-        return false;
     }
 
     public function actionUpdateWidgetLayout()

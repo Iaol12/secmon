@@ -129,7 +129,7 @@ class DashboardAPI {
 
   async deleteWidget(widgetId) {
     try {
-      const response = await this.apiClient.delete(`/dashboard/delete-widget/${widgetId}`);
+      const response = await this.apiClient.delete(`/dashboard/delete-widget?widgetId=${widgetId}`);
       return response.data;
     } catch (error) {
       console.error(`Error deleting widget ${widgetId}:`, error);
