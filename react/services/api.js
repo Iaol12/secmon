@@ -171,12 +171,13 @@ class DashboardAPI {
   }
 
 
-  async getWidgetContent(widgetId, page = 1) {
+  async getWidgetContent(widgetId, page = null) {
     try {
       const response = await this.apiClient.get('/dashboard-widget/content', {
         params: {
           widgetId,
-          page
+          // The core logic is here:
+          ...(page !== null ? { pagination: page } : {})
         }
       });
       return response.data;

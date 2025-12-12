@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BarChart from './charts/BarChart';
 import PieChart from './charts/PieChart';
 import LineChart from './charts/LineChart';
-import DataTable from './charts/DataTable';
+import EventTable from './charts/EventTable';
 import WidgetSettings from './WidgetSettings';
 import api from '../services/api';
 import './WidgetCard.css';
@@ -22,6 +22,11 @@ const WidgetCard = ({
   const config = JSON.parse(widget.config || '{}');
   const hasContent = widget.chart_type !== null && widget.chart_type !== undefined && widget.chart_type !== '';
 
+  // Reset page to 1 when chart type or config changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [widget.chart_type, widget.config]);
+
   useEffect(() => {
     if (hasContent) {
       loadContent();
@@ -31,12 +36,9 @@ const WidgetCard = ({
   const loadContent = async () => {
     setIsLoading(true);
     try {
-      const data = await api.getWidgetContent(
-        widget.id, 
-        widget.filter_id, 
-        widget.chart_type || 'table',
-        currentPage
-      );
+      // Only send pagination for table charts
+      const pageParam = widget.chart_type === 'table' ? Number(currentPage) || 1 : null;
+      const data = await api.getWidgetContent(widget.id, pageParam);
       setContentData(data);
     } catch (error) {
       console.error('Error loading content:', error);
@@ -102,22 +104,22 @@ const WidgetCard = ({
       return <div className="widget-error">Failed to load content</div>;
     }
 
-    const { data, html } = contentData;
     const chartType = widget.chart_type;
-    const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
 
     switch (chartType) {
       case 'barChart':
-        return <BarChart data={parsedData} />;
+        return <BarChart data={contentData.data} />;
       case 'pieChart':
-        return <PieChart data={parsedData} config={config} />;
+        return <PieChart data={contentData.data} config={config} />;
       case 'lineChart':
-        return <LineChart data={parsedData} />;
+        return <LineChart data={contentData.data} />;
       case 'table':
         return (
-          <DataTable 
-            html={html}
-            onPageChange={(page) => setCurrentPage(page)}
+          <EventTable 
+            data={contentData.data}
+            columns={contentData.columns}
+            pagination={contentData.pagination}
+            onPageChange={(page) => setCurrentPage(Number(page))}
           />
         );
       default:

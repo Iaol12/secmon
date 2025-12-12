@@ -178,11 +178,20 @@ class ChartDataService
         return $adjustedDt < $dt ? $dt : $adjustedDt;
     }
 
-    public function getFilteredEvents($filterId, $page)
+    /**
+     * Get filtered events for table widget with specified columns
+     * @param integer $filterId
+     * @param integer $page
+     * @param array $columns
+     * @param string $timeframe
+     * @return array
+     */
+    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '')
     {
         $query = SecurityEvents::find();
         $page = max(1, intval($page)) - 1;
 
+        // Apply filter if provided
         if (!empty($filterId)) {
             $filter = Filter::findOne(['id' => $filterId]);
             if (!empty($filter)) {
@@ -190,10 +199,25 @@ class ChartDataService
             }
         }
 
+        // Apply timeframe filter if provided
+        if (!empty($timeframe)) {
+            $range = $this->parseTimeframeToDateInterval($timeframe);
+            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
+            $dt->sub(new \DateInterval($range));
+            $startDate = $dt->format("Y-m-d H:i:s");
+            $query->andWhere(['>=', 'datetime', $startDate]);
+        }
+
+        // Select only specified columns, or all if none specified
+        if (!empty($columns) && is_array($columns)) {
+            $query->select($columns);
+        }
+
         $filteredData = $query
             ->orderBy(['datetime' => SORT_DESC, 'id' => SORT_DESC])
             ->limit(10)
             ->offset(10 * $page)
+            ->asArray()
             ->all();
 
         Yii::$app->cache->flush();
@@ -201,11 +225,18 @@ class ChartDataService
         return $filteredData;
     }
 
-    public function getFilteredEventsCount($filterId)
+    /**
+     * Get count of filtered events for table widget
+     * @param integer $filterId
+     * @param string $timeframe
+     * @return integer
+     */
+    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '')
     {
         $query = SecurityEvents::find();
         $query->select(["count(*) as count"]);
 
+        // Apply filter if provided
         if (!empty($filterId)) {
             $filter = Filter::findOne(['id' => $filterId]);
             if (!empty($filter)) {
@@ -213,10 +244,18 @@ class ChartDataService
             }
         }
 
+        // Apply timeframe filter if provided
+        if (!empty($timeframe)) {
+            $range = $this->parseTimeframeToDateInterval($timeframe);
+            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
+            $dt->sub(new \DateInterval($range));
+            $startDate = $dt->format("Y-m-d H:i:s");
+            $query->andWhere(['>=', 'datetime', $startDate]);
+        }
+
         $result = $query->asArray()->one();
         Yii::$app->cache->flush();
 
         return isset($result['count']) ? intval($result['count']) : 0;
     }
-
 }

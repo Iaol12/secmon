@@ -120,10 +120,11 @@ class DashboardWidgetController extends Controller
                 
             case "table":
                 $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
-                $columns = $config['columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
+                $columns = $config['table_columns'] ?? $config['columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
+                $timeframe = $widget->timeframe ?? '';
                 
-                $filteredData = $this->chartDataService->getFilteredEvents($widget->filter_id, $pagination);
-                $count = $this->chartDataService->getFilteredEventsCount($widget->filter_id);
+                $filteredData = $this->chartDataService->getFilteredEventsTableWidget($widget->filter_id, $pagination, $columns, $timeframe);
+                $count = $this->chartDataService->getFilteredEventsCountForTableWidget($widget->filter_id, $timeframe);
 
                 return [
                     'chartType' => $chartType,
