@@ -137,6 +137,14 @@ class DashboardWidgetController extends Controller
                     'data' => $filteredData,
                 ];
                 
+            case "geoMap":
+                $locationType = $config['geoLocationType'] ?? 'destination';
+                return [
+                    'chartType' => $chartType,
+                    'timeframe' => $timeframe,
+                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $locationType, $timeframe)
+                ];
+                
             default:
                 throw new \yii\web\BadRequestHttpException('Invalid chart type.');
         }

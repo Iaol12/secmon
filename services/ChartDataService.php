@@ -281,4 +281,55 @@ class ChartDataService
 
         return isset($result['count']) ? intval($result['count']) : 0;
     }
+
+    /**
+     * Get filtered events grouped by country for choropleth map
+     * @param integer $filterId
+     * @param string $locationType - 'source' or 'destination'
+     * @param string $timeframe
+     * @return array
+     */
+    public function getFilteredEventsGeoMap($filterId, $locationType = 'destination', $timeframe = null)
+    {
+        $query = SecurityEvents::find();
+        
+        // Determine which country fields to use
+        $countryField = $locationType === 'source' ? 'source_country' : 'destination_country';
+        $countryCodeField = $locationType === 'source' ? 'source_code' : 'destination_code';
+        $latField = $locationType === 'source' ? 'source_geo_latitude' : 'destination_geo_latitude';
+        $lonField = $locationType === 'source' ? 'source_geo_longitude' : 'destination_geo_longitude';
+        
+        // Select country name, code, coordinates and event count
+        $query->select([
+            "COALESCE($countryField, $countryCodeField) as country",
+            "$countryCodeField as code",
+            "$latField as latitude",
+            "$lonField as longitude",
+            "count(*) as count"
+        ])
+        ->groupBy(["$countryCodeField", "$countryField", "$latField", "$lonField"])
+        ->orderBy(['count' => SORT_DESC]);
+
+        // Apply filter if provided
+        if (!empty($filterId)) {
+            $filter = Filter::findOne(['id' => $filterId]);
+            if (!empty($filter)) {
+                $query->applyFilter($filter);
+            }
+        }
+
+        // Apply timeframe filter if provided
+        if (!empty($timeframe)) {
+            $range = $this->parseTimeframeToDateInterval($timeframe);
+            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
+            $dt->sub(new \DateInterval($range));
+            $startDate = $dt->format("Y-m-d H:i:s");
+            $query->andWhere(['>=', 'datetime', $startDate]);
+        }
+
+        $filteredData = $query->asArray()->all();
+        Yii::$app->cache->flush();
+
+        return $filteredData;
+    }
 }

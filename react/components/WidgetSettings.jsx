@@ -21,7 +21,8 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
     barChart: { label: 'Bar Chart', icon: 'chart-icon-bar', category: 'categorical' },
     pieChart: { label: 'Pie Chart', icon: 'chart-icon-pie', category: 'categorical' },
     lineChart: { label: 'Line Chart', icon: 'chart-icon-line', category: 'continuous' },
-    table: { label: 'Table', icon: 'chart-icon-table', category: 'all' }
+    table: { label: 'Table', icon: 'chart-icon-table', category: 'all' },
+    geoMap: { label: 'Geo Map', icon: 'chart-icon-map', category: 'location' }
   };
 
   const getVisibleChartTypes = () => {
@@ -109,6 +110,13 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                     onClick={() => setActiveTab('continuous')}
                   >
                     Continuous
+                  </button>
+                  <button
+                    type="button"
+                    className={`widget-settings-tab ${activeTab === 'location' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('location')}
+                  >
+                    Location
                   </button>
                 </div>
 
@@ -330,6 +338,23 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                         </small>
                       </>
                     )}
+                  </div>
+                )}
+
+                {formData.chartType === 'geoMap' && (
+                  <div className="form-group">
+                    <label htmlFor="geoLocationType">Location Type</label>
+                    <select
+                      id="geoLocationType"
+                      value={formData.config.geoLocationType || 'destination'}
+                      onChange={(e) => updateConfigField('geoLocationType', e.target.value)}
+                    >
+                      <option value="destination">Destination</option>
+                      <option value="source">Source</option>
+                    </select>
+                    <small style={{ display: 'block', marginTop: '4px', color: '#666' }}>
+                      Choose whether to map events by source or destination country
+                    </small>
                   </div>
                 )}
               </div>

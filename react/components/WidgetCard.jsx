@@ -3,6 +3,7 @@ import BarChart from './charts/BarChart';
 import PieChart from './charts/PieChart';
 import LineChart from './charts/LineChart';
 import EventTable from './charts/EventTable';
+import GeoMap from './charts/GeoMap';
 import WidgetSettings from './WidgetSettings';
 import api from '../services/api';
 import './WidgetCard.css';
@@ -120,6 +121,8 @@ const WidgetCard = ({
             onPageChange={(page) => setCurrentPage(Number(page))}
           />
         );
+      case 'geoMap':
+        return <GeoMap data={contentData.data} />;
       default:
         return <div>Unknown content type</div>;
     }
