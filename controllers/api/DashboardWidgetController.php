@@ -97,7 +97,7 @@ class DashboardWidgetController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsPieChart($widget->filter_id, $field)
+                    'data' => $this->chartDataService->getFilteredEventsPieChart($widget->filter_id, $field, $timeframe)
                 ];
                 
             case "barChart":
@@ -107,7 +107,7 @@ class DashboardWidgetController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $field)
+                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $field, $timeframe)
                 ];
                 
             case "lineChart":

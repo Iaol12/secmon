@@ -31,7 +31,7 @@ const WidgetCard = ({
     if (hasContent) {
       loadContent();
     }
-  }, [widget.id, widget.filter_id, widget.chart_type, widget.config, currentPage]);
+  }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config, currentPage]);
 
   const loadContent = async () => {
     setIsLoading(true);

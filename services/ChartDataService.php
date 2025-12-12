@@ -8,7 +8,7 @@ use Yii;
 
 class ChartDataService
 {
-    public function getFilteredEventsPieChart($filterId, $field)
+    public function getFilteredEventsPieChart($filterId, $field, $timeframe = null)
     {
         $query = SecurityEvents::find();
         $label = "CAST(" . $field . " AS text) as label";
@@ -25,13 +25,22 @@ class ChartDataService
             }
         }
 
+        // Apply timeframe filter if provided
+        if (!empty($timeframe)) {
+            $range = $this->parseTimeframeToDateInterval($timeframe);
+            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
+            $dt->sub(new \DateInterval($range));
+            $startDate = $dt->format("Y-m-d H:i:s");
+            $query->andWhere(['>=', 'datetime', $startDate]);
+        }
+
         $filteredData = $query->asArray()->all();
         Yii::$app->cache->flush();
 
         return $filteredData;
     }
 
-    public function getFilteredEventsBarChart($filterId, $field)
+    public function getFilteredEventsBarChart($filterId, $field, $timeframe = null)
     {
         $query = SecurityEvents::find();
         $label = "CAST(" . $field . " AS text) as label";
@@ -46,6 +55,15 @@ class ChartDataService
             if (!empty($filter)) {
                 $query->applyFilter($filter);
             }
+        }
+
+        // Apply timeframe filter if provided
+        if (!empty($timeframe)) {
+            $range = $this->parseTimeframeToDateInterval($timeframe);
+            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
+            $dt->sub(new \DateInterval($range));
+            $startDate = $dt->format("Y-m-d H:i:s");
+            $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
         $filteredData = $query->asArray()->all();
