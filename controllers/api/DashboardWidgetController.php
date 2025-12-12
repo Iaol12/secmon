@@ -138,11 +138,10 @@ class DashboardWidgetController extends Controller
                 ];
                 
             case "geoMap":
-                $locationType = $config['geoLocationType'] ?? 'destination';
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $locationType, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $timeframe)
                 ];
                 
             default:

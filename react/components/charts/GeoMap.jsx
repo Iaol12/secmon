@@ -6,6 +6,7 @@ const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
 export default function GeoMap({ data }) {
   const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Organize data by country code for quick lookup
   const eventsByCode = useMemo(() => {
@@ -22,14 +23,13 @@ export default function GeoMap({ data }) {
   // Calculate stats
   const stats = useMemo(() => {
     const events = Object.values(eventsByCode).reduce((sum, count) => sum + count, 0);
-    const countries = Object.keys(eventsByCode).length;
     const maxCount = Math.max(...Object.values(eventsByCode), 0);
-    return { events, countries, maxCount };
+    return { events, maxCount };
   }, [eventsByCode]);
 
   // Color function based on event count
   const getColor = (count) => {
-    if (!count || count === 0) return '#f0f0f0';
+    if (!count || count === 0) return darkMode ? '#2a2a2a' : '#f0f0f0';
     const intensity = Math.log(count + 1) / Math.log(stats.maxCount + 1);
     return intensity > 0.8 ? '#800026' :
            intensity > 0.6 ? '#BD0026' :
@@ -86,16 +86,25 @@ export default function GeoMap({ data }) {
     return countryCodeMap[name] || null;
   };
 
-  // Top countries
-  const topCountries = useMemo(() => {
-    return Object.entries(eventsByCode)
-      .map(([code, count]) => ({ code, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-  }, [eventsByCode]);
-
   return (
-    <div className="geomap-container">
+    <div className={`geomap-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div className="geomap-mode-toggle">
+        <button
+          className={`mode-btn ${!darkMode ? 'active' : ''}`}
+          onClick={() => setDarkMode(false)}
+          title="Light Mode"
+        >
+          ☀️
+        </button>
+        <button
+          className={`mode-btn ${darkMode ? 'active' : ''}`}
+          onClick={() => setDarkMode(true)}
+          title="Dark Mode"
+        >
+          🌙
+        </button>
+      </div>
+
       <div className="geomap-map">
         <ComposableMap>
           <Geographies geography={geoUrl}>
@@ -114,7 +123,7 @@ export default function GeoMap({ data }) {
                     style={{
                       default: {
                         fill: fillColor,
-                        stroke: '#fff',
+                        stroke: darkMode ? '#444' : '#fff',
                         strokeWidth: 0.75,
                         outline: 'none',
                         cursor: eventCount > 0 ? 'pointer' : 'default',
@@ -122,16 +131,16 @@ export default function GeoMap({ data }) {
                       },
                       hover: {
                         fill: fillColor,
-                        stroke: '#333',
+                        stroke: darkMode ? '#ccc' : '#333',
                         strokeWidth: 1,
                         outline: 'none',
                         cursor: eventCount > 0 ? 'pointer' : 'default',
-                        filter: 'brightness(0.9)',
+                        filter: darkMode ? 'brightness(1.2)' : 'brightness(0.9)',
                         transition: 'all 250ms',
                       },
                       pressed: {
                         fill: fillColor,
-                        stroke: '#333',
+                        stroke: darkMode ? '#ccc' : '#333',
                         strokeWidth: 1.5,
                         outline: 'none',
                       },
@@ -142,31 +151,6 @@ export default function GeoMap({ data }) {
             }
           </Geographies>
         </ComposableMap>
-      </div>
-
-      <div className="geomap-sidebar">
-        <div className="geomap-legend">
-          <h4>Top Countries</h4>
-          {topCountries.map((item, idx) => (
-            <div key={idx} className="legend-item">
-              <span
-                className="legend-color"
-                style={{
-                  backgroundColor: getColor(item.count),
-                }}
-              ></span>
-              <span className="legend-label">{item.code} ({item.count})</span>
-            </div>
-          ))}
-        </div>
-        <div className="geomap-stats">
-          <h4>Statistics</h4>
-          <p><strong>Countries:</strong> {stats.countries}</p>
-          <p><strong>Total Events:</strong> {stats.events}</p>
-          {topCountries.length > 0 && (
-            <p><strong>Top:</strong> {topCountries[0].code}</p>
-          )}
-        </div>
       </div>
 
       {hoveredCountry && (

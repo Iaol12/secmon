@@ -1,90 +1,66 @@
 .geomap-container {
   display: flex;
-  height: 100%;
+  flex-direction: column;
   width: 100%;
-  gap: 0;
-  background: white;
+  height: 100%;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.geomap-container.dark-mode {
+  background-color: #1a1a1a;
+}
+
+.geomap-mode-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.geomap-container.dark-mode .geomap-mode-toggle {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.mode-btn {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 200ms;
+}
+
+.geomap-container.dark-mode .mode-btn {
+  border-color: #555;
+  color: #fff;
+}
+
+.mode-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.geomap-container.dark-mode .mode-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mode-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
 }
 
 .geomap-map {
   flex: 1;
-  min-height: 500px;
-  background: #f8f9fa;
-  border-right: 1px solid #ddd;
-}
-
-.geomap-sidebar {
-  width: 280px;
-  background: white;
-  overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.geomap-legend {
-  flex: 0 0 auto;
-}
-
-.geomap-legend h4 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: #333;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
-  gap: 8px;
-}
-
-.legend-color {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #999;
-  border-radius: 2px;
-}
-
-.legend-label {
-  color: #555;
-  flex: 1;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.geomap-stats {
-  flex: 1;
-  padding-top: 16px;
-  border-top: 1px solid #eee;
-}
-
-.geomap-stats h4 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: #333;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.geomap-stats p {
-  margin: 8px 0;
-  font-size: 12px;
-  color: #666;
-  display: flex;
-  justify-content: space-between;
-}
-
-.geomap-stats strong {
-  color: #333;
-  font-weight: 600;
 }
 
 .geomap-tooltip {
@@ -105,22 +81,8 @@
   color: #fff;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .geomap-container {
-    flex-direction: column;
-  }
-
-  .geomap-sidebar {
-    width: 100%;
-    border-right: none;
-    border-top: 1px solid #ddd;
-    flex-direction: row;
-    gap: 16px;
-  }
-
-  .geomap-legend,
-  .geomap-stats {
-    flex: 1;
+    min-height: 400px;
   }
 }

@@ -343,17 +343,8 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
 
                 {formData.chartType === 'geoMap' && (
                   <div className="form-group">
-                    <label htmlFor="geoLocationType">Location Type</label>
-                    <select
-                      id="geoLocationType"
-                      value={formData.config.geoLocationType || 'destination'}
-                      onChange={(e) => updateConfigField('geoLocationType', e.target.value)}
-                    >
-                      <option value="destination">Destination</option>
-                      <option value="source">Source</option>
-                    </select>
-                    <small style={{ display: 'block', marginTop: '4px', color: '#666' }}>
-                      Choose whether to map events by source or destination country
+                    <small style={{ display: 'block', color: '#666' }}>
+                      Shows security events mapped by source country
                     </small>
                   </div>
                 )}

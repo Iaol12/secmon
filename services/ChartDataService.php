@@ -289,25 +289,19 @@ class ChartDataService
      * @param string $timeframe
      * @return array
      */
-    public function getFilteredEventsGeoMap($filterId, $locationType = 'destination', $timeframe = null)
+    public function getFilteredEventsGeoMap($filterId, $timeframe = null)
     {
         $query = SecurityEvents::find();
         
-        // Determine which country fields to use
-        $countryField = $locationType === 'source' ? 'source_country' : 'destination_country';
-        $countryCodeField = $locationType === 'source' ? 'source_code' : 'destination_code';
-        $latField = $locationType === 'source' ? 'source_geo_latitude' : 'destination_geo_latitude';
-        $lonField = $locationType === 'source' ? 'source_geo_longitude' : 'destination_geo_longitude';
-        
-        // Select country name, code, coordinates and event count
+        // Use source country only
         $query->select([
-            "COALESCE($countryField, $countryCodeField) as country",
-            "$countryCodeField as code",
-            "$latField as latitude",
-            "$lonField as longitude",
+            "COALESCE(source_country, source_code) as country",
+            "source_code as code",
+            "source_geo_latitude as latitude",
+            "source_geo_longitude as longitude",
             "count(*) as count"
         ])
-        ->groupBy(["$countryCodeField", "$countryField", "$latField", "$lonField"])
+        ->groupBy(["source_code", "source_country", "source_geo_latitude", "source_geo_longitude"])
         ->orderBy(['count' => SORT_DESC]);
 
         // Apply filter if provided
