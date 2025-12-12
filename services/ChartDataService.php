@@ -188,6 +188,11 @@ class ChartDataService
      */
     public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '')
     {
+
+        if(!in_array('id', $columns)){
+            $columns[] = 'id';
+        }
+
         $query = SecurityEvents::find();
         $page = max(1, intval($page)) - 1;
 
