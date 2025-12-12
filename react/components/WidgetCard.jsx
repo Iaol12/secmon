@@ -60,14 +60,12 @@ const WidgetCard = ({
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this widget?')) {
       try {
         await api.deleteWidget(widget.id);
         onDelete(widget.id);
       } catch (error) {
         console.error('Error deleting widget:', error);
       }
-    }
   };
 
   const renderContent = () => {
