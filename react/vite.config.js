@@ -29,6 +29,11 @@ export default defineConfig({
           });
         },
       },
+      '/assets': {
+        target: 'https://localhost:8443',
+        changeOrigin: true,
+        secure: false,
+      }
     },
   }
 })
