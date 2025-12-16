@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import './GeoMap.css';
 
-const geoUrl = '/assets/countries-110m.json';
+const geoUrl = '/data/countries-110m.json';
 
 export default function GeoMap({ data }) {
   const [hoveredCountry, setHoveredCountry] = useState(null);
