@@ -102,24 +102,4 @@
   white-space: nowrap;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .event-table-cell {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .event-table-header {
-    padding: 10px;
-    font-size: 12px;
-  }
-
-  .pagination-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .pagination-info {
-    font-size: 12px;
-  }
-}
+/* Responsive styles removed */

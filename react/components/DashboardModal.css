@@ -192,17 +192,4 @@
   gap: 12px;
 }
 
-@media (max-width: 600px) {
-  .modal-content {
-    width: 95%;
-    margin: 10px;
-  }
-  
-  .modal-header {
-    padding: 16px;
-  }
-  
-  .modal-form {
-    padding: 16px;
-  }
-}
+/* Responsive styles removed */

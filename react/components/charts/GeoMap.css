@@ -32,8 +32,4 @@
   color: #fff;
 }
 
-@media (max-width: 768px) {
-  .geomap-container {
-    min-height: 400px;
-  }
-}
+/* Responsive styles removed */
