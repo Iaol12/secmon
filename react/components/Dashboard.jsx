@@ -288,21 +288,29 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <div className="header-left">
           <div className="dashboard-select-container">
-            <label htmlFor="dashboard-selector" className="dashboard-select-label">
-              Dashboard:
+            <label className="dashboard-select-label">
+              Dashboards
             </label>
-            <select 
-              id="dashboard-selector"
-              value={currentDashboardId} 
-              onChange={handleDashboardChange}
-              className="dashboard-select"
-            >
+            <div className="dashboard-tabs-container">
               {dashboards.map(dashboard => (
-                <option key={dashboard.id} value={dashboard.id}>
+                <button
+                  key={dashboard.id}
+                  className={`dashboard-tab ${parseInt(currentDashboardId) === dashboard.id ? 'active' : ''}`}
+                  onClick={() => setCurrentDashboardId(dashboard.id)}
+                  title={dashboard.name}
+                >
                   {dashboard.name}
-                </option>
+                </button>
               ))}
-            </select>
+              <button
+                className="add-dashboard-tab"
+                onClick={handleCreateDashboard}
+                title="Create New Dashboard"
+                disabled={isViewMode}
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
         
