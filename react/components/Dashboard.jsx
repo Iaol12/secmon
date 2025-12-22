@@ -287,6 +287,14 @@ const Dashboard = () => {
     <div className={`dashboard-container ${isViewMode ? 'header-hidden' : ''}`}>
       <div className="dashboard-header">
         <div className="header-left">
+          <button 
+            className="dashboard-action-btn back-btn"
+            onClick={() => window.history.back()}
+            title="Back to Main App"
+          >
+            <span>← Back</span>
+          </button>
+
           <div className="dashboard-select-container">
             <label className="dashboard-select-label">
               Dashboards
@@ -381,14 +389,16 @@ const Dashboard = () => {
         </button>
       )}
 
-      <button 
-        className="add-widget-fab"
-        onClick={handleAddWidget}
-        title="Add Widget"
-        disabled={isViewMode}
-        style={{ display: isViewMode ? 'none' : 'flex' }}
-      >
-      </button>
+      {!isViewMode && (
+        <button 
+          className="add-widget-button"
+          onClick={handleAddWidget}
+          title="Add New Widget"
+        >
+          <span className="add-widget-icon">+</span>
+          <span className="add-widget-text">Add Widget</span>
+        </button>
+      )}
 
       <DashboardModal
         isOpen={modalState.isOpen}
