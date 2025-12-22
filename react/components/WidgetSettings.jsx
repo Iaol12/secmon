@@ -46,7 +46,7 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
       <div className={`modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4>{formData.title || 'Widget'} - Options</h4>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close-btn" onClick={onClose}>
           </button>
         </div>
         
@@ -355,16 +355,16 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
           <div className="modal-footer">
             <button 
               type="button" 
-              className="btn btn-danger"
+              className="btn-danger"
               onClick={onDelete}
             >
               Delete Widget
             </button>
             <div className="modal-footer-right">
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn-primary">
                 Save
               </button>
-              <button type="button" className="btn btn-secondary" onClick={onClose}>
+              <button type="button" className="btn-secondary" onClick={onClose}>
                 Cancel
               </button>
             </div>

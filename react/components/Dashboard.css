@@ -61,11 +61,6 @@
   white-space: nowrap;
 }
 
-.dashboard-select {
-  /* Override Materialize CSS which sets select to display: none */
-  display: none !important;
-}
-
 /* Modern Dashboard Tabs Container */
 .dashboard-tabs-container {
   display: flex;
@@ -171,14 +166,6 @@
 
 .collapse-arrow.expanded {
   transform: rotate(180deg);
-}
-
-.dashboard-action-btn.create-btn {
-  background: #4CAF50;
-}
-
-.dashboard-action-btn.create-btn:hover {
-  background: #45a049;
 }
 
 .dashboard-action-btn.update-btn {
