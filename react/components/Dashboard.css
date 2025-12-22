@@ -17,6 +17,21 @@
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  transition: all 0.3s ease, opacity 0.3s ease, max-height 0.3s ease;
+  max-height: 500px;
+  overflow: hidden;
+}
+
+.dashboard-container.header-hidden .dashboard-header {
+  max-height: 0;
+  padding: 0 24px;
+  margin-bottom: 0;
+  opacity: 0;
+  box-shadow: none;
+}
+
+.dashboard-container.header-hidden .dashboard-header > * {
+  display: none;
 }
 
 /* Header Left Section */
@@ -149,6 +164,27 @@
   transform: translateY(0);
 }
 
+.dashboard-action-btn.collapse-header-btn {
+  background: #FF9800;
+  padding: 10px 12px;
+  min-width: 44px;
+  justify-content: center;
+}
+
+.dashboard-action-btn.collapse-header-btn:hover {
+  background: #F57C00;
+}
+
+.collapse-arrow {
+  display: inline-block;
+  font-size: 18px;
+  transition: transform 0.3s ease;
+  line-height: 1;
+}
+
+.collapse-arrow.expanded {
+  transform: rotate(180deg);
+}
 
 .dashboard-action-btn.create-btn {
   background: #4CAF50;
@@ -172,22 +208,6 @@
 
 .dashboard-action-btn.delete-btn:hover {
   background: #da190b;
-}
-
-.dashboard-action-btn.view-mode-btn {
-  background: #FF9800;
-}
-
-.dashboard-action-btn.view-mode-btn:hover {
-  background: #F57C00;
-}
-
-.dashboard-action-btn.edit-mode-btn {
-  background: #9C27B0;
-}
-
-.dashboard-action-btn.edit-mode-btn:hover {
-  background: #7B1FA2;
 }
 
 .dashboard-action-btn:disabled {
@@ -283,6 +303,46 @@
 .add-widget-fab:hover {
   background: #45a049;
   transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Show Header FAB */
+.show-header-fab {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #FF9800;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 99;
+  font-size: 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateX(-50%) translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.show-header-fab:hover {
+  background: #F57C00;
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 

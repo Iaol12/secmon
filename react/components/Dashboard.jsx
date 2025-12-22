@@ -284,7 +284,7 @@ const Dashboard = () => {
 
 
   return (
-    <div className="dashboard-container">
+    <div className={`dashboard-container ${isViewMode ? 'header-hidden' : ''}`}>
       <div className="dashboard-header">
         <div className="header-left">
           <div className="dashboard-select-container">
@@ -316,20 +316,11 @@ const Dashboard = () => {
         
         <div className="dashboard-actions">
           <button 
-            className={`dashboard-action-btn ${isViewMode ? 'edit-mode-btn' : 'view-mode-btn'}`}
+            className="dashboard-action-btn collapse-header-btn"
             onClick={() => setIsViewMode(!isViewMode)}
-            title={isViewMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+            title={isViewMode ? "Show Header" : "Hide Header"}
           >
-            <span>{isViewMode ? 'Edit Mode' : 'View Mode'}</span>
-          </button>
-          
-          <button 
-            className="dashboard-action-btn create-btn"
-            onClick={handleCreateDashboard}
-            title="Create New Dashboard"
-            disabled={isViewMode}
-          >            
-            <span>New</span>
+            <span className={`collapse-arrow ${isViewMode ? 'expanded' : ''}`}>▲</span>
           </button>
           
           <button 
@@ -379,6 +370,16 @@ const Dashboard = () => {
           ))}
         </ResponsiveGridLayout>
       </div>
+
+      {isViewMode && (
+        <button 
+          className="show-header-fab"
+          onClick={() => setIsViewMode(false)}
+          title="Show Header"
+        >
+          ▼
+        </button>
+      )}
 
       <button 
         className="add-widget-fab"
