@@ -177,11 +177,6 @@
   background: #da190b;
 }
 
-.dashboard-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Dashboard Grid */
 .dashboard-grid {
   position: relative;
@@ -222,24 +217,6 @@
   border-radius: 8px;
 }
 
-.react-grid-item > .react-resizable-handle {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-}
-
-.react-grid-item > .react-resizable-handle::after {
-  content: "";
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
-}
-
-/* Add Widget Button - Bottom Center */
 .add-widget-button {
   position: fixed;
   bottom: 32px;
@@ -306,22 +283,10 @@
   animation: widgetAppear 0.3s ease-out;
 }
 
-@keyframes slideDown {
-  from {
-    transform: translateX(-50%) translateY(-50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-}
-
 .show-header-fab:hover {
   background: #F57C00;
 }
 
-/* Delete Confirmation Modal */
 .delete-confirm {
   max-width: 450px;
 }
