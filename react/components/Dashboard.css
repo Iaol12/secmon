@@ -101,9 +101,6 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
   font-size: 16px;
 }
 
@@ -133,10 +130,6 @@
 
 .dashboard-action-btn:hover {
   opacity: 0.9;
-}
-
-.dashboard-action-btn:active {
-  opacity: 0.8;
 }
 
 .dashboard-action-btn.back-btn {
@@ -291,16 +284,8 @@
   flex-shrink: 0;
 }
 
-.add-widget-text {
-  white-space: nowrap;
-}
-
 .add-widget-button:hover {
   background: #45a049;
-}
-
-.add-widget-button:active {
-  opacity: 0.9;
 }
 
 /* Show Header FAB */
@@ -316,11 +301,7 @@
   color: white;
   border: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.2s ease;
-  z-index: 99;
   font-size: 20px;
   animation: widgetAppear 0.3s ease-out;
 }
@@ -338,28 +319,6 @@
 
 .show-header-fab:hover {
   background: #F57C00;
-}
-
-/* Empty State */
-.dashboard-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: #999;
-  text-align: center;
-}
-
-.dashboard-empty h3 {
-  font-size: 24px;
-  margin-bottom: 8px;
-  color: #666;
-}
-
-.dashboard-empty p {
-  font-size: 16px;
-  margin-bottom: 24px;
 }
 
 /* Delete Confirmation Modal */
@@ -484,9 +443,5 @@
     width: 20px;
     height: 20px;
     font-size: 16px;
-  }
-
-  .add-widget-text {
-    display: none;
   }
 }
