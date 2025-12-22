@@ -11,13 +11,12 @@
   background: white;
   padding: 20px 24px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
   margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  transition: all 0.3s ease, opacity 0.3s ease, max-height 0.3s ease;
   max-height: 500px;
   overflow: hidden;
 }
@@ -27,7 +26,6 @@
   padding: 0 24px;
   margin-bottom: 0;
   opacity: 0;
-  box-shadow: none;
 }
 
 .dashboard-container.header-hidden .dashboard-header > * {
@@ -85,20 +83,6 @@
   border: 2px solid transparent;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-tab::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
 }
 
 .dashboard-tab:hover {
@@ -108,15 +92,9 @@
 }
 
 .dashboard-tab.active {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: #2196F3;
   color: white;
   border-color: #1565C0;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-}
-
-.dashboard-tab.active:hover {
-  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
-  transform: translateY(-2px);
 }
 
 .add-dashboard-tab {
@@ -136,7 +114,6 @@
 
 .add-dashboard-tab:hover {
   background: #45a049;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Dashboard Actions */
@@ -157,17 +134,14 @@
   font-weight: 500;
   color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0.9;
 }
 
 .dashboard-action-btn:active {
-  transform: translateY(0);
+  opacity: 0.8;
 }
 
 .dashboard-action-btn.back-btn {
@@ -192,7 +166,6 @@
 .collapse-arrow {
   display: inline-block;
   font-size: 18px;
-  transition: transform 0.3s ease;
   line-height: 1;
 }
 
@@ -227,12 +200,6 @@
 .dashboard-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none !important;
-}
-
-.dashboard-action-btn:disabled:hover {
-  transform: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Dashboard Grid */
@@ -246,8 +213,7 @@
 }
 
 .react-grid-item {
-  transition: all 200ms ease;
-  transition-property: left, top, width, height;
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
 }
 
 .react-grid-item.cssTransforms {
@@ -272,7 +238,6 @@
 .react-grid-item.react-grid-placeholder {
   background: #2196F3;
   opacity: 0.2;
-  transition-duration: 100ms;
   z-index: 2;
   border-radius: 8px;
 }
@@ -311,13 +276,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
-  transition: all 0.3s ease;
   z-index: 100;
-  animation: slideUp 0.4s ease-out;
+  animation: widgetAppear 0.4s ease-out;
 }
 
-@keyframes slideUp {
+@keyframes widgetAppear {
   from {
     transform: translateX(-50%) translateY(100px);
     opacity: 0;
@@ -347,12 +310,10 @@
 
 .add-widget-button:hover {
   background: #45a049;
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
 }
 
 .add-widget-button:active {
-  transform: translateX(-50%) translateY(0);
+  opacity: 0.9;
 }
 
 /* Show Header FAB */
@@ -367,15 +328,14 @@
   background: #FF9800;
   color: white;
   border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   z-index: 99;
   font-size: 20px;
-  animation: slideDown 0.3s ease-out;
+  animation: widgetAppear 0.3s ease-out;
 }
 
 @keyframes slideDown {
@@ -391,8 +351,6 @@
 
 .show-header-fab:hover {
   background: #F57C00;
-  transform: translateX(-50%) scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Empty State */
@@ -443,7 +401,6 @@
 
 .btn-danger:hover {
   background-color: #d32f2f;
-  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
 /* Responsive Design */
