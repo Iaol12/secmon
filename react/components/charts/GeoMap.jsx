@@ -1,12 +1,42 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import './GeoMap.css';
 
 const geoUrl = '/data/countries-110m.json';
+let cachedGeographies = null;
+let geographiesLoadingPromise = null;
+
+const loadGeographies = () => {
+  if (cachedGeographies) {
+    return Promise.resolve(cachedGeographies);
+  }
+  if (geographiesLoadingPromise) {
+    return geographiesLoadingPromise;
+  }
+  geographiesLoadingPromise = fetch(geoUrl)
+    .then(res => res.json())
+    .then(data => {
+      cachedGeographies = data;
+      geographiesLoadingPromise = null;
+      return data;
+    })
+    .catch(err => {
+      geographiesLoadingPromise = null;
+      throw err;
+    });
+  return geographiesLoadingPromise;
+};
 
 export default function GeoMap({ data }) {
   const [hoveredCountry, setHoveredCountry] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [geographiesData, setGeographiesData] = useState(null);
+
+  // Load geographies once and cache them
+  useEffect(() => {
+    loadGeographies()
+      .then(data => setGeographiesData(data))
+      .catch(err => console.error('Error loading geographies:', err));
+  }, []);
 
   // Organize data by country code for quick lookup
   const eventsByCode = useMemo(() => {
@@ -29,7 +59,7 @@ export default function GeoMap({ data }) {
 
   // Color function based on event count
   const getColor = (count) => {
-    if (!count || count === 0) return darkMode ? '#2a2a2a' : '#f0f0f0';
+    if (!count || count === 0) return '#f0f0f0';
     const intensity = Math.log(count + 1) / Math.log(stats.maxCount + 1);
     return intensity > 0.8 ? '#800026' :
            intensity > 0.6 ? '#BD0026' :
@@ -87,70 +117,59 @@ export default function GeoMap({ data }) {
   };
 
   return (
-    <div className={`geomap-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
-      <div className="geomap-mode-toggle">
-        <button
-          className={`mode-btn ${!darkMode ? 'active' : ''}`}
-          onClick={() => setDarkMode(false)}
-          title="Light Mode"
-        >
-          ☀️
-        </button>
-        <button
-          className={`mode-btn ${darkMode ? 'active' : ''}`}
-          onClick={() => setDarkMode(true)}
-          title="Dark Mode"
-        >
-          🌙
-        </button>
-      </div>
-
+    <div className="geomap-container">
       <div className="geomap-map">
-        <ComposableMap>
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const countryCode = getCountryCode(geo.properties.name);
-                const eventCount = eventsByCode[countryCode] || 0;
-                const fillColor = getColor(eventCount);
+        {!geographiesData ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
+            Loading map...
+          </div>
+        ) : (
+          <ComposableMap>
+            <Geographies geography={geographiesData}>
+              {({ geographies }) =>
+                geographies.map((geo) => {
+                  const countryCode = getCountryCode(geo.properties.name);
+                  const eventCount = eventsByCode[countryCode] || 0;
+                  const fillColor = getColor(eventCount);
 
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onMouseEnter={() => setHoveredCountry({ name: geo.properties.name, code: countryCode, count: eventCount })}
-                    onMouseLeave={() => setHoveredCountry(null)}
-                    style={{
-                      default: {
-                        fill: fillColor,
-                        stroke: darkMode ? '#444' : '#fff',
-                        strokeWidth: 0.75,
-                        outline: 'none',
-                        cursor: eventCount > 0 ? 'pointer' : 'default',
-                        transition: 'all 250ms',
-                      },
-                      hover: {
-                        fill: fillColor,
-                        stroke: darkMode ? '#ccc' : '#333',
-                        strokeWidth: 1,
-                        outline: 'none',
-                        cursor: eventCount > 0 ? 'pointer' : 'default',
-                        filter: darkMode ? 'brightness(1.2)' : 'brightness(0.9)',
-                        transition: 'all 250ms',
-                      },
-                      pressed: {
-                        fill: fillColor,
-                        stroke: darkMode ? '#ccc' : '#333',
-                        strokeWidth: 1.5,
-                        outline: 'none',
-                      },
-                    }}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ComposableMap>
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      onMouseEnter={() => setHoveredCountry({ name: geo.properties.name, code: countryCode, count: eventCount })}
+                      onMouseLeave={() => setHoveredCountry(null)}
+                      style={{
+                        default: {
+                          fill: fillColor,
+                          stroke: '#fff',
+                          strokeWidth: 0.75,
+                          outline: 'none',
+                          cursor: eventCount > 0 ? 'pointer' : 'default',
+                          transition: 'all 250ms',
+                        },
+                        hover: {
+                          fill: fillColor,
+                          stroke: '#333',
+                          strokeWidth: 1,
+                          outline: 'none',
+                          cursor: eventCount > 0 ? 'pointer' : 'default',
+                          filter: 'brightness(0.9)',
+                          transition: 'all 250ms',
+                        },
+                        pressed: {
+                          fill: fillColor,
+                          stroke: '#333',
+                          strokeWidth: 1.5,
+                          outline: 'none',
+                        },
+                      }}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+          </ComposableMap>
+        )}
       </div>
 
       {hoveredCountry && (

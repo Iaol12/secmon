@@ -7,55 +7,6 @@
   position: relative;
 }
 
-.geomap-container.dark-mode {
-  background-color: #1a1a1a;
-}
-
-.geomap-mode-toggle {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  gap: 5px;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 5px;
-  border-radius: 4px;
-}
-
-.geomap-container.dark-mode .geomap-mode-toggle {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-.mode-btn {
-  background: none;
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 200ms;
-}
-
-.geomap-container.dark-mode .mode-btn {
-  border-color: #555;
-  color: #fff;
-}
-
-.mode-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.geomap-container.dark-mode .mode-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.mode-btn.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
 .geomap-map {
   flex: 1;
   width: 100%;
