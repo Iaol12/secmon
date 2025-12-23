@@ -38,13 +38,26 @@ export default function GeoMap({ data }) {
       .catch(err => console.error('Error loading geographies:', err));
   }, []);
 
-  // Organize data by country code for quick lookup
+  // Organize data by country code and build reverse map from names
   const eventsByCode = useMemo(() => {
     const map = {};
     if (data && Array.isArray(data)) {
       data.forEach(item => {
         const code = item.code || 'UNKNOWN';
         map[code] = item.count || 0;
+      });
+    }
+    return map;
+  }, [data]);
+
+  // Map country names from data to their codes for dynamic lookup
+  const countryNameToCode = useMemo(() => {
+    const map = {};
+    if (data && Array.isArray(data)) {
+      data.forEach(item => {
+        if (item.country && item.code) {
+          map[item.country] = item.code;
+        }
       });
     }
     return map;
@@ -69,51 +82,20 @@ export default function GeoMap({ data }) {
            '#FEB24C';
   };
 
-  // Country code mapping from geography properties
-  const countryCodeMap = {
+  // Exceptions: geojson country names that don't match data country names
+  const countryCodeExceptions = {
     'United States of America': 'US',
     'United Kingdom': 'GB',
-    'China': 'CN',
-    'India': 'IN',
-    'Japan': 'JP',
-    'Germany': 'DE',
-    'France': 'FR',
-    'Brazil': 'BR',
-    'Canada': 'CA',
-    'Russia': 'RU',
-    'Mexico': 'MX',
-    'South Korea': 'KR',
-    'Spain': 'ES',
-    'Italy': 'IT',
-    'Netherlands': 'NL',
-    'Sweden': 'SE',
-    'Australia': 'AU',
-    'South Africa': 'ZA',
-    'Egypt': 'EG',
-    'Nigeria': 'NG',
-    'Singapore': 'SG',
-    'Hong Kong': 'HK',
-    'Taiwan': 'TW',
-    'Thailand': 'TH',
-    'Malaysia': 'MY',
-    'Indonesia': 'ID',
-    'Philippines': 'PH',
-    'Vietnam': 'VN',
-    'Pakistan': 'PK',
-    'Bangladesh': 'BD',
-    'Argentina': 'AR',
-    'Chile': 'CL',
-    'Colombia': 'CO',
-    'Poland': 'PL',
-    'Austria': 'AT',
-    'Belgium': 'BE',
-    'Switzerland': 'CH',
-    'Norway': 'NO',
-    'Denmark': 'DK',
+    // Add more exceptions as needed
   };
 
-  const getCountryCode = (name) => {
-    return countryCodeMap[name] || null;
+  const getCountryCode = (geojsonName) => {
+    // First check if this is an exception
+    if (countryCodeExceptions[geojsonName]) {
+      return countryCodeExceptions[geojsonName];
+    }
+    // Then try to match against country names in data
+    return countryNameToCode[geojsonName] || null;
   };
 
   return (

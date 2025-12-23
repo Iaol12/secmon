@@ -298,22 +298,18 @@ class ChartDataService
             $query->select([
                 "COALESCE(destination_country, destination_code) as country",
                 "destination_code as code",
-                "destination_geo_latitude as latitude",
-                "destination_geo_longitude as longitude",
                 "count(*) as count"
             ])
-            ->groupBy(["destination_code", "destination_country", "destination_geo_latitude", "destination_geo_longitude"])
+            ->groupBy(["destination_code", "destination_country"])
             ->orderBy(['count' => SORT_DESC]);
         } else {
             // Default to source
             $query->select([
                 "COALESCE(source_country, source_code) as country",
                 "source_code as code",
-                "source_geo_latitude as latitude",
-                "source_geo_longitude as longitude",
                 "count(*) as count"
             ])
-            ->groupBy(["source_code", "source_country", "source_geo_latitude", "source_geo_longitude"])
+            ->groupBy(["source_code", "source_country"])
             ->orderBy(['count' => SORT_DESC]);
         }
 
@@ -335,8 +331,14 @@ class ChartDataService
         }
 
         $filteredData = $query->asArray()->all();
+        
+        // Filter out entries with null or empty codes
+        $filteredData = array_filter($filteredData, function($item) {
+            return !empty($item['code']);
+        });
+        
         Yii::$app->cache->flush();
 
-        return $filteredData;
+        return array_values($filteredData);
     }
 }
