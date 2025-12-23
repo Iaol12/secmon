@@ -211,11 +211,20 @@ const Dashboard = () => {
   };
 
   const handleWidgetUpdate = (updatedWidget) => {
-    setWidgets(prevWidgets => 
-      prevWidgets.map(w => 
-        w.id === updatedWidget.id ? updatedWidget : w
-      )
+    setWidgets(prevWidgets =>
+      prevWidgets.map(w => {
+        if (w.id === updatedWidget.id) {
+          return {
+            // keep existing positional/layout info, but update content
+            ...w,
+            ...updatedWidget,
+            layout: w.layout ?? updatedWidget.layout
+          };
+        }
+        return w;
+      })
     );
+    return 0;
   };
 
   const handleWidgetDelete = (widgetId) => {
