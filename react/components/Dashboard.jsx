@@ -364,8 +364,8 @@ const Dashboard = () => {
         <ResponsiveGridLayout
           className="layout"
           layouts={{ lg: getLayout() }}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          breakpoints={{ lg: 1200, md: 996}}
+          cols={{ lg: 12, md: 10}}
           rowHeight={80}
           onLayoutChange={handleLayoutChange}
           draggableHandle=".widget-drag-handle"
@@ -373,7 +373,6 @@ const Dashboard = () => {
           isDraggable={!isViewMode}
           isResizable={!isViewMode}
           static={isViewMode}
-          
         >
           {visibleWidgets.map(widget => (
             <div key={widget.id.toString()}>

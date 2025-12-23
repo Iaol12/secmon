@@ -180,6 +180,8 @@
 /* Dashboard Grid */
 .dashboard-grid {
   position: relative;
+  min-width: 600px;
+  margin: 0 auto;
 }
 
 .react-grid-layout {
