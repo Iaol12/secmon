@@ -131,7 +131,7 @@
 }
 
 .chart-icon-pie::before {
-  content: "🥧";
+  content: "⭕";
 }
 
 .chart-icon-line::before {
@@ -140,6 +140,10 @@
 
 .chart-icon-table::before {
   content: "📋";
+}
+
+.chart-icon-map::before {
+  content: "🗺️";
 }
 
 /* Timeframe Slider Styles */
