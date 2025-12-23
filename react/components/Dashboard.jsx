@@ -365,7 +365,7 @@ const Dashboard = () => {
           className="layout"
           layouts={{ lg: getLayout() }}
           breakpoints={{ lg: 1200, md: 996}}
-          cols={{ lg: 12, md: 10}}
+          cols={{ lg: 12, md: 12}}
           rowHeight={80}
           onLayoutChange={handleLayoutChange}
           draggableHandle=".widget-drag-handle"
