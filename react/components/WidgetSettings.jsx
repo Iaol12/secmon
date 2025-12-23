@@ -30,7 +30,7 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
       return Object.entries(chartTypes);
     }
     return Object.entries(chartTypes).filter(([_, chart]) => 
-      chart.category === activeTab || chart.category === 'all'
+      chart.category === activeTab
     );
   };
 
