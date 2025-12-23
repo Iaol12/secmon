@@ -120,7 +120,7 @@ class DashboardWidgetController extends Controller
                 
             case "table":
                 $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
-                $columns = $config['table_columns'] ?? $config['columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
+                $columns = $config['table_columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
                 $timeframe = $widget->timeframe ?? '';
                 
                 $filteredData = $this->chartDataService->getFilteredEventsTableWidget($widget->filter_id, $pagination, $columns, $timeframe);
@@ -138,10 +138,12 @@ class DashboardWidgetController extends Controller
                 ];
                 
             case "geoMap":
+                $geoConfig = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
+                $locationType = $geoConfig['location_type'] ?? 'source';
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $timeframe)
+                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $locationType, $timeframe)
                 ];
                 
             default:

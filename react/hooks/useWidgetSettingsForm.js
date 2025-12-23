@@ -14,6 +14,7 @@ export const useWidgetSettingsForm = (widget, config) => {
       bar_chart_variable: config.bar_chart_variable || '',
       show_labels: config.show_labels !== undefined ? config.show_labels : true,
       granularity: config.granularity || '1h',
+      location_type: config.location_type || 'source',
       ...config
     }
   });
@@ -117,6 +118,10 @@ export const useWidgetSettingsForm = (widget, config) => {
 
       case 'lineChart':
         dynamicConfig.granularity = currentConfig.granularity;
+        break;
+
+      case 'geoMap':
+        dynamicConfig.location_type = currentConfig.location_type || 'source';
         break;
 
       default:

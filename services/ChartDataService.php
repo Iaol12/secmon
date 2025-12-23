@@ -289,20 +289,33 @@ class ChartDataService
      * @param string $timeframe
      * @return array
      */
-    public function getFilteredEventsGeoMap($filterId, $timeframe = null)
+    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null)
     {
         $query = SecurityEvents::find();
         
-        // Use source country only
-        $query->select([
-            "COALESCE(source_country, source_code) as country",
-            "source_code as code",
-            "source_geo_latitude as latitude",
-            "source_geo_longitude as longitude",
-            "count(*) as count"
-        ])
-        ->groupBy(["source_code", "source_country", "source_geo_latitude", "source_geo_longitude"])
-        ->orderBy(['count' => SORT_DESC]);
+        // Select appropriate fields based on location type
+        if ($locationType === 'destination') {
+            $query->select([
+                "COALESCE(destination_country, destination_code) as country",
+                "destination_code as code",
+                "destination_geo_latitude as latitude",
+                "destination_geo_longitude as longitude",
+                "count(*) as count"
+            ])
+            ->groupBy(["destination_code", "destination_country", "destination_geo_latitude", "destination_geo_longitude"])
+            ->orderBy(['count' => SORT_DESC]);
+        } else {
+            // Default to source
+            $query->select([
+                "COALESCE(source_country, source_code) as country",
+                "source_code as code",
+                "source_geo_latitude as latitude",
+                "source_geo_longitude as longitude",
+                "count(*) as count"
+            ])
+            ->groupBy(["source_code", "source_country", "source_geo_latitude", "source_geo_longitude"])
+            ->orderBy(['count' => SORT_DESC]);
+        }
 
         // Apply filter if provided
         if (!empty($filterId)) {
