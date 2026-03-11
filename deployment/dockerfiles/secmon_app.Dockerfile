@@ -31,16 +31,6 @@ RUN pip cache purge
 WORKDIR /var/www/html/secmon
 RUN mkdir /var/www/html/secmon/web
 
-# Copy application files for npm install
-COPY package.json package-lock.json* ./
-RUN npm install
-
-# Copy rest of application
-COPY . .
-
-# Build React dashboard
-RUN npm run build
-
 # Copy apache config files
 COPY deployment/config_files/000-default.conf /etc/apache2/sites-available/
 COPY deployment/config_files/default-ssl.conf /etc/apache2/sites-available/
