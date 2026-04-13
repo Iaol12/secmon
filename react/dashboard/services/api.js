@@ -4,8 +4,8 @@ const API_BASE_URL = '/api';
 
 class DashboardAPI {
   constructor() {
-    this.authToken = 'MEsrdn-6wf7bP-nT8mVJ5YCorYGb1D3m'; 
-    // this.authToken = window.dashboardConfig?.authToken || null;
+    // this.authToken = 'MEsrdn-6wf7bP-nT8mVJ5YCorYGb1D3m'; 
+    this.authToken = window.dashboardConfig?.authToken || null;
     this.apiClient = axios.create({
       baseURL: API_BASE_URL,
       headers: {

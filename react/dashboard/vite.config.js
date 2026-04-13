@@ -26,7 +26,8 @@ export default defineConfig({
             res.end('Proxy error: ' + err.message);
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            proxyReq.setHeader('Authorization', 'Bearer MEsrdn-6wf7bP-nT8mVJ5YCorYGb1D3m');
+            proxyReq.setHeader('Authorization', 'Bearer dpn--jlmyVmqyoW0nXYjbjrEtxa_C5KU');
+
             console.log('Sending Request to the Target:', req.method, req.url);
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
@@ -42,7 +43,7 @@ export default defineConfig({
     },
   },
   build: {
-      outDir: path.resolve(__dirname, '../web/js/dist'),
+      outDir: path.resolve(__dirname, '../../web/js/dist'),
       emptyOutDir: true,
       rollupOptions: {
         input: path.resolve(__dirname, './index.html'),
