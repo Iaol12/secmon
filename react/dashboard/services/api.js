@@ -171,13 +171,15 @@ class DashboardAPI {
   }
 
 
-  async getWidgetContent(widgetId, page = null) {
+  async getWidgetContent(widgetId, page = null, sinceTimestamp = null) {
     try {
       const response = await this.apiClient.get('/dashboard-widget/content', {
         params: {
           widgetId,
           // The core logic is here:
-          ...(page !== null ? { pagination: page } : {})
+          ...(page !== null ? { pagination: page } : {}),
+          // Support incremental updates with timestamp
+          ...(sinceTimestamp ? { sinceTimestamp } : {})
         }
       });
       return response.data;

@@ -8,7 +8,7 @@ use Yii;
 
 class ChartDataService
 {
-    public function getFilteredEventsPieChart($filterId, $field, $timeframe = null)
+    public function getFilteredEventsPieChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
     {
         $query = SecurityEvents::find();
         $label = "CAST(" . $field . " AS text) as label";
@@ -34,13 +34,27 @@ class ChartDataService
             $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dt->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dt->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
+            }
+        }
+
         $filteredData = $query->asArray()->all();
         Yii::$app->cache->flush();
 
         return $filteredData;
     }
 
-    public function getFilteredEventsBarChart($filterId, $field, $timeframe = null)
+    public function getFilteredEventsBarChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
     {
         $query = SecurityEvents::find();
         $label = "CAST(" . $field . " AS text) as label";
@@ -66,13 +80,27 @@ class ChartDataService
             $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dt->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dt->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
+            }
+        }
+
         $filteredData = $query->asArray()->all();
         Yii::$app->cache->flush();
 
         return $filteredData;
     }
 
-    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H')
+    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H', $sinceTimestamp = null)
     {
         $range = !empty($timeframe) ? $this->parseTimeframeToDateInterval($timeframe) : 'P1W';
         $interval = new \DateInterval($this->parseGranularityToDateInterval($granularity));
@@ -92,6 +120,20 @@ class ChartDataService
             $filter = Filter::findOne(['id' => $filterId]);
             if (!empty($filter)) {
                 $query->applyFilter($filter);
+            }
+        }
+
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dtSince = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dtSince->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dtSince->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
             }
         }
 
@@ -202,9 +244,10 @@ class ChartDataService
      * @param integer $page
      * @param array $columns
      * @param string $timeframe
+     * @param string $sinceTimestamp - timestamp for incremental updates
      * @return array
      */
-    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '')
+    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '', $sinceTimestamp = null)
     {
 
         if(!in_array('id', $columns)){
@@ -231,6 +274,20 @@ class ChartDataService
             $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dt->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dt->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
+            }
+        }
+
         // Select only specified columns, or all if none specified
         if (!empty($columns) && is_array($columns)) {
             $query->select($columns);
@@ -252,9 +309,10 @@ class ChartDataService
      * Get count of filtered events for table widget
      * @param integer $filterId
      * @param string $timeframe
+     * @param string $sinceTimestamp - timestamp for incremental updates
      * @return integer
      */
-    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '')
+    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '', $sinceTimestamp = null)
     {
         $query = SecurityEvents::find();
         $query->select(["count(*) as count"]);
@@ -276,6 +334,20 @@ class ChartDataService
             $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dt->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dt->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
+            }
+        }
+
         $result = $query->asArray()->one();
         Yii::$app->cache->flush();
 
@@ -287,9 +359,10 @@ class ChartDataService
      * @param integer $filterId
      * @param string $locationType - 'source' or 'destination'
      * @param string $timeframe
+     * @param string $sinceTimestamp - timestamp for incremental updates
      * @return array
      */
-    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null)
+    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null, $sinceTimestamp = null)
     {
         $query = SecurityEvents::find();
         
@@ -328,6 +401,20 @@ class ChartDataService
             $dt->sub(new \DateInterval($range));
             $startDate = $dt->format("Y-m-d H:i:s");
             $query->andWhere(['>=', 'datetime', $startDate]);
+        }
+
+        // Apply timestamp filter if provided (for incremental updates)
+        if (!empty($sinceTimestamp)) {
+            // Subtract small buffer to avoid missing edge-case events due to precision
+            try {
+                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
+                $dt->sub(new \DateInterval('PT1S'));
+                $safeTimestamp = $dt->format("Y-m-d H:i:s");
+                $query->andWhere(['>', 'datetime', $safeTimestamp]);
+            } catch (\Exception $e) {
+                // If parsing fails, just use the timestamp as-is
+                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
+            }
         }
 
         $filteredData = $query->asArray()->all();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BarChart from './charts/BarChart';
 import PieChart from './charts/PieChart';
 import LineChart from './charts/LineChart';
@@ -19,6 +19,8 @@ const WidgetCard = ({
   const [contentData, setContentData] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pollInterval, setPollInterval] = useState(null);
+  const lastFetchTimestampRef = useRef(null);
 
   const config = JSON.parse(widget.config || '{}');
   const hasContent = widget.chart_type !== null && widget.chart_type !== undefined && widget.chart_type !== '';
@@ -28,23 +30,170 @@ const WidgetCard = ({
     setCurrentPage(1);
   }, [widget.chart_type, widget.config]);
 
+  // Initial load and setup polling
   useEffect(() => {
     if (hasContent) {
-      loadContent();
+      // Initial load without timestamp
+      loadContent(true);
+      // Setup 5-second polling
+      const interval = setInterval(() => {
+        loadContent(false);
+      }, 5000);
+      setPollInterval(interval);
+      
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
+    } else {
+      // Clear polling if no content
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        setPollInterval(null);
+      }
     }
-  }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config, currentPage]);
+  }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config]);
 
-  const loadContent = async () => {
-    setIsLoading(true);
+  // Merge delta data based on chart type
+  const mergeData = (existingData, newDeltaData, chartType) => {
+    if (!newDeltaData || newDeltaData.length === 0) {
+      return existingData;
+    }
+
+    switch (chartType) {
+      case 'pieChart':
+      case 'barChart':
+        // For pie/bar charts, merge by label/field
+        return mergeChartData(existingData, newDeltaData);
+      
+      case 'lineChart':
+        // For line charts, merge by x value (timestamp)
+        return mergeLineChartData(existingData, newDeltaData);
+      
+      case 'table':
+        // For tables, prepend new rows (most recent first)
+        return [...newDeltaData, ...existingData];
+      
+      case 'geoMap':
+        // For geo maps, merge by code
+        return mergeGeoData(existingData, newDeltaData);
+      
+      default:
+        return existingData;
+    }
+  };
+
+  // Merge pie/bar chart data by aggregating counts
+  const mergeChartData = (existing, delta) => {
+    const merged = [...existing];
+    
+    delta.forEach(newItem => {
+      const existingItem = merged.find(item => 
+        (item.label === newItem.label || item.x === newItem.x || item.name === newItem.name)
+      );
+      
+      if (existingItem) {
+        // Add to existing count
+        existingItem.count = (existingItem.count || 0) + (newItem.count || 0);
+        existingItem.y = (existingItem.y || 0) + (newItem.y || 0);
+      } else {
+        // New data point
+        merged.push(newItem);
+      }
+    });
+    
+    return merged;
+  };
+
+  // Merge line chart data by time bucket
+  const mergeLineChartData = (existing, delta) => {
+    const merged = [...existing];
+    
+    delta.forEach(newItem => {
+      const existingItem = merged.find(item => item.x === newItem.x);
+      
+      if (existingItem) {
+        // Add to existing y value
+        existingItem.y = (existingItem.y || 0) + (newItem.y || 0);
+      } else {
+        // New time bucket
+        merged.push(newItem);
+      }
+    });
+    
+    // Sort by x to maintain chronological order
+    return merged.sort((a, b) => a.x.localeCompare(b.x));
+  };
+
+  // Merge geo map data by country code
+  const mergeGeoData = (existing, delta) => {
+    const merged = [...existing];
+    
+    delta.forEach(newItem => {
+      const existingItem = merged.find(item => item.code === newItem.code);
+      
+      if (existingItem) {
+        // Add to existing count
+        existingItem.count = (existingItem.count || 0) + (newItem.count || 0);
+      } else {
+        // New country
+        merged.push(newItem);
+      }
+    });
+    
+    // Sort by count descending
+    return merged.sort((a, b) => b.count - a.count);
+  };
+
+  const loadContent = async (isInitial = false) => {
+    if (!isInitial) {
+      // Only set loading once for the first load
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
     try {
-      // Only send pagination for table charts
+      // For table charts, use pagination. For others, send only delta timestamp
       const pageParam = widget.chart_type === 'table' ? Number(currentPage) || 1 : null;
-      const data = await api.getWidgetContent(widget.id, pageParam);
-      setContentData(data);
+      const timestamp = !isInitial && lastFetchTimestampRef.current ? lastFetchTimestampRef.current : null;
+      
+      const data = await api.getWidgetContent(widget.id, pageParam, timestamp);
+      
+      if (data) {
+        // Store the response timestamp for next poll
+        if (data.timestamp) {
+          lastFetchTimestampRef.current = data.timestamp;
+        }
+
+        // For initial load, just set the data
+        if (isInitial) {
+          setContentData(data);
+        } else {
+          // For subsequent polls, merge data (unless it's a table, which gets fresh data)
+          if (widget.chart_type === 'table') {
+            // Tables should reset to page 1 and show fresh data
+            setContentData(data);
+          } else {
+            // Merge delta data for other chart types
+            setContentData(prevData => {
+              if (!prevData) return data;
+              
+              return {
+                ...data,
+                data: mergeData(prevData.data || [], data.data || [], widget.chart_type)
+              };
+            });
+          }
+        }
+      }
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
-      setIsLoading(false);
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -54,6 +203,8 @@ const WidgetCard = ({
       if (result.success && result.widget) {
         onWidgetUpdate(result.widget);
         setShowSettings(false);
+        // Reset timestamp on settings change
+        lastFetchTimestampRef.current = null;
       }
     } catch (error) {
       console.error('Error saving settings:', error);
