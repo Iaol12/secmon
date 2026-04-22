@@ -8,114 +8,110 @@ use Yii;
 
 class ChartDataService
 {
+    private const TIMEZONE = 'Europe/Bratislava';
+    private const DATE_FORMAT = 'Y-m-d H:i:s';
+    private const TIMESTAMP_BUFFER = 'PT1S';
+    private const DEFAULT_TIMEFRAME = 'P1W';
+    private const DEFAULT_GRANULARITY = '2H';
+
     public function getFilteredEventsPieChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
     {
-        $query = SecurityEvents::find();
-        $label = "CAST(" . $field . " AS text) as label";
-        $value = "count(" . $field . ") as count";
-        
-        $query->select([$label, $value])
-            ->groupby(["label"])
-            ->orderBy(['label' => SORT_ASC]);
-
-        if (!empty($filterId)) {
-            $filter = Filter::findOne(['id' => $filterId]);
-            if (!empty($filter)) {
-                $query->applyFilter($filter);
-            }
-        }
-
-        // Apply timeframe filter if provided
-        if (!empty($timeframe)) {
-            $range = $this->parseTimeframeToDateInterval($timeframe);
-            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-            $dt->sub(new \DateInterval($range));
-            $startDate = $dt->format("Y-m-d H:i:s");
-            $query->andWhere(['>=', 'datetime', $startDate]);
-        }
-
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
-        }
-
-        $filteredData = $query->asArray()->all();
-        Yii::$app->cache->flush();
-
-        return $filteredData;
+        return $this->getGroupedEventsByField($filterId, $field, $timeframe, $sinceTimestamp);
     }
 
     public function getFilteredEventsBarChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
     {
-        $query = SecurityEvents::find();
-        $label = "CAST(" . $field . " AS text) as label";
-        $value = "count(" . $field . ") as count";
-        
-        $query->select([$label, $value])
-            ->groupby(["label"])
-            ->orderBy(['label' => SORT_ASC]);
-
-        if (!empty($filterId)) {
-            $filter = Filter::findOne(['id' => $filterId]);
-            if (!empty($filter)) {
-                $query->applyFilter($filter);
-            }
-        }
-
-        // Apply timeframe filter if provided
-        if (!empty($timeframe)) {
-            $range = $this->parseTimeframeToDateInterval($timeframe);
-            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-            $dt->sub(new \DateInterval($range));
-            $startDate = $dt->format("Y-m-d H:i:s");
-            $query->andWhere(['>=', 'datetime', $startDate]);
-        }
-
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
-        }
-
-        $filteredData = $query->asArray()->all();
-        Yii::$app->cache->flush();
-
-        return $filteredData;
+        return $this->getGroupedEventsByField($filterId, $field, $timeframe, $sinceTimestamp);
     }
 
-    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H', $sinceTimestamp = null)
+    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = self::DEFAULT_GRANULARITY, $sinceTimestamp = null)
     {
-        $range = !empty($timeframe) ? $this->parseTimeframeToDateInterval($timeframe) : 'P1W';
+        $range = $this->parseTimeframeToDateInterval($timeframe ?? self::DEFAULT_TIMEFRAME);
         $interval = new \DateInterval($this->parseGranularityToDateInterval($granularity));
-        $sqlGroupingFormat = $this->getSqlGroupingFormat($granularity);
-        
-        $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-        $dt->sub(new \DateInterval($range));
-        $startDate = $dt->format("Y-m-d H:i:s");
+        $sqlFormat = $this->getSqlGroupingFormat($granularity);
 
+        $startDate = $this->getStartDateForRange($range);
         $query = SecurityEvents::find()
-            ->select(["to_char(datetime, '$sqlGroupingFormat') as x", "count(id) as y"])
+            ->select(["to_char(datetime, '$sqlFormat') as x", "count(id) as y"])
             ->groupBy(["x"])
             ->orderBy(['x' => SORT_ASC])
             ->andWhere(['>', "datetime", $startDate]);
 
+        $this->applyFilters($query, $filterId, null, $sinceTimestamp);
+
+        $filteredData = $query->asArray()->all();
+        return $this->fillLineChartData($filteredData, $startDate, $interval, $granularity);
+    }
+
+    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '', $sinceTimestamp = null)
+    {
+        if (!in_array('id', $columns)) {
+            $columns[] = 'id';
+        }
+
+        $query = SecurityEvents::find();
+        $page = max(1, intval($page)) - 1;
+
+        $this->applyFilters($query, $filterId, $timeframe, $sinceTimestamp);
+
+        if (!empty($columns) && is_array($columns)) {
+            $query->select($columns);
+        }
+
+        return $query
+            ->orderBy(['datetime' => SORT_DESC, 'id' => SORT_DESC])
+            ->limit(10)
+            ->offset(10 * $page)
+            ->asArray()
+            ->all();
+    }
+
+    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '', $sinceTimestamp = null)
+    {
+        $query = SecurityEvents::find()
+            ->select(["count(*) as count"]);
+
+        $this->applyFilters($query, $filterId, $timeframe, $sinceTimestamp);
+
+        $result = $query->asArray()->one();
+        return isset($result['count']) ? intval($result['count']) : 0;
+    }
+
+    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null, $sinceTimestamp = null)
+    {
+        $query = SecurityEvents::find();
+        $this->selectGeoFields($query, $locationType);
+
+        $this->applyFilters($query, $filterId, $timeframe, $sinceTimestamp);
+
+        $filteredData = $query->asArray()->all();
+
+        return array_values(array_filter($filteredData, fn($item) => !empty($item['code'])));
+    }
+
+    public function isValidISO8601(string $granularity): bool
+    {
+        preg_match('/^(\d+)\s*(hour|day|week|month|year|h|m|d|w|y)s?$/i', rtrim($granularity, 's'), $matches);
+        return !empty($matches);
+    }
+
+    private function getGroupedEventsByField($filterId, $field, $timeframe = null, $sinceTimestamp = null)
+    {
+        $query = SecurityEvents::find();
+        $label = "CAST(" . $field . " AS text) as label";
+        $value = "count(" . $field . ") as count";
+
+        $query->select([$label, $value])
+            ->groupBy(["label"])
+            ->orderBy(['label' => SORT_ASC]);
+
+        $this->applyFilters($query, $filterId, $timeframe, $sinceTimestamp);
+
+        return $query->asArray()->all();
+    }
+
+    private function applyFilters(&$query, $filterId, $timeframe = null, $sinceTimestamp = null)
+    {
         if (!empty($filterId)) {
             $filter = Filter::findOne(['id' => $filterId]);
             if (!empty($filter)) {
@@ -123,27 +119,47 @@ class ChartDataService
             }
         }
 
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dtSince = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dtSince->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dtSince->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
+        if (!empty($timeframe)) {
+            $startDate = $this->getStartDateForRange($this->parseTimeframeToDateInterval($timeframe));
+            $query->andWhere(['>=', 'datetime', $startDate]);
         }
 
-        $filteredData = $query->asArray()->all();
+        if (!empty($sinceTimestamp)) {
+            $safeTimestamp = $this->getSafeTimestamp($sinceTimestamp);
+            $query->andWhere(['>', 'datetime', $safeTimestamp]);
+        }
+    }
+
+    private function getSafeTimestamp($timestamp)
+    {
+        try {
+            $dt = new \DateTime($timestamp, new \DateTimeZone('UTC'));
+            $dt->sub(new \DateInterval(self::TIMESTAMP_BUFFER));
+            return $dt->format(self::DATE_FORMAT);
+        } catch (\Exception $e) {
+            return $timestamp;
+        }
+    }
+
+    private function getStartDateForRange($range)
+    {
+        $dt = new \DateTime('now', new \DateTimeZone(self::TIMEZONE));
+        $dt->sub(new \DateInterval($range));
+        return $dt->format(self::DATE_FORMAT);
+    }
+
+    private function fillLineChartData($filteredData, $startDate, $interval, $granularity)
+    {
         $chartData = [];
-        $now = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-        $dt = $this->adjustStartDateForGranularity($dt, $granularity);
+        $now = new \DateTime('now', new \DateTimeZone(self::TIMEZONE));
+        $dt = $this->adjustStartDateForGranularity(
+            \DateTime::createFromFormat(self::DATE_FORMAT, $startDate, new \DateTimeZone(self::TIMEZONE)),
+            $granularity
+        );
+
         $phpDateFormat = $this->getPhpDateFormat($granularity);
         $i = 0;
-        
+
         while ($dt <= $now) {
             $dt_end = clone $dt;
             $dt_end->add($interval);
@@ -162,6 +178,27 @@ class ChartDataService
         return $chartData;
     }
 
+    private function selectGeoFields(&$query, $locationType)
+    {
+        if ($locationType === 'destination') {
+            $query->select([
+                "COALESCE(destination_country, destination_code) as country",
+                "destination_code as code",
+                "count(*) as count"
+            ])
+            ->groupBy(["destination_code", "destination_country"])
+            ->orderBy(['count' => SORT_DESC]);
+        } else {
+            $query->select([
+                "COALESCE(source_country, source_code) as country",
+                "source_code as code",
+                "count(*) as count"
+            ])
+            ->groupBy(["source_code", "source_country"])
+            ->orderBy(['count' => SORT_DESC]);
+        }
+    }
+
     private function parseTimeframeToDateInterval(string $timeframe): string
     {
         $timeUnit = substr($timeframe, -1);
@@ -174,7 +211,9 @@ class ChartDataService
     private function parseGranularityToDateInterval(string $granularity): string
     {
         preg_match('/^(\d+)\s*(hour|day|week|month|year|h|m|d|w|y)$/i', rtrim($granularity, 's'), $matches);
-        if (empty($matches)) return 'P1W';
+        if (empty($matches)) {
+            return self::DEFAULT_TIMEFRAME;
+        }
 
         $amount = $matches[1];
         $unit = strtolower($matches[2]);
@@ -185,34 +224,46 @@ class ChartDataService
             'day' => 'P' . $amount . 'D', 'd' => 'P' . $amount . 'D',
             'hour' => 'PT' . $amount . 'H', 'h' => 'PT' . $amount . 'H',
         ];
-        return $map[$unit] ?? 'P1W';
-    }
-
-    public function isValidISO8601(string $granularity): bool
-    {
-        preg_match('/^(\d+)\s*(hour|day|week|month|year|h|m|d|w|y)s?$/i', rtrim($granularity, 's'), $matches);
-        return !empty($matches);
+        return $map[$unit] ?? self::DEFAULT_TIMEFRAME;
     }
 
     private function getSqlGroupingFormat(string $granularity): string
     {
         $g = rtrim(strtolower($granularity), 's');
-        if (strpos($g, 'hour') !== false || strpos($g, 'h') !== false) return 'YYYY-MM-DD HH24';
-        if (strpos($g, 'day') !== false || strpos($g, 'd') !== false) return 'YYYY-MM-DD';
-        if (strpos($g, 'week') !== false || strpos($g, 'w') !== false) return 'YYYY-WW';
-        if (strpos($g, 'month') !== false || strpos($g, 'mon') !== false) return 'YYYY-MM';
-        if (strpos($g, 'year') !== false || strpos($g, 'y') !== false) return 'YYYY';
+        $formats = [
+            'hour' => 'YYYY-MM-DD HH24', 'h' => 'YYYY-MM-DD HH24',
+            'day' => 'YYYY-MM-DD', 'd' => 'YYYY-MM-DD',
+            'week' => 'YYYY-WW', 'w' => 'YYYY-WW',
+            'month' => 'YYYY-MM', 'mon' => 'YYYY-MM',
+            'year' => 'YYYY', 'y' => 'YYYY',
+        ];
+
+        foreach ($formats as $key => $format) {
+            if (strpos($g, $key) !== false) {
+                return $format;
+            }
+        }
+
         return 'YYYY-MM-DD';
     }
 
     private function getPhpDateFormat(string $granularity): string
     {
         $g = rtrim(strtolower($granularity), 's');
-        if (strpos($g, 'hour') !== false || strpos($g, 'h') !== false) return 'Y-m-d H';
-        if (strpos($g, 'day') !== false || strpos($g, 'd') !== false) return 'Y-m-d';
-        if (strpos($g, 'week') !== false || strpos($g, 'w') !== false) return 'Y-W';
-        if (strpos($g, 'month') !== false || strpos($g, 'mon') !== false) return 'Y-m';
-        if (strpos($g, 'year') !== false || strpos($g, 'y') !== false) return 'Y';
+        $formats = [
+            'hour' => 'Y-m-d H', 'h' => 'Y-m-d H',
+            'day' => 'Y-m-d', 'd' => 'Y-m-d',
+            'week' => 'Y-W', 'w' => 'Y-W',
+            'month' => 'Y-m', 'mon' => 'Y-m',
+            'year' => 'Y', 'y' => 'Y',
+        ];
+
+        foreach ($formats as $key => $format) {
+            if (strpos($g, $key) !== false) {
+                return $format;
+            }
+        }
+
         return 'Y-m-d';
     }
 
@@ -236,196 +287,5 @@ class ChartDataService
         }
 
         return $adjustedDt < $dt ? $dt : $adjustedDt;
-    }
-
-    /**
-     * Get filtered events for table widget with specified columns
-     * @param integer $filterId
-     * @param integer $page
-     * @param array $columns
-     * @param string $timeframe
-     * @param string $sinceTimestamp - timestamp for incremental updates
-     * @return array
-     */
-    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '', $sinceTimestamp = null)
-    {
-
-        if(!in_array('id', $columns)){
-            $columns[] = 'id';
-        }
-
-        $query = SecurityEvents::find();
-        $page = max(1, intval($page)) - 1;
-
-        // Apply filter if provided
-        if (!empty($filterId)) {
-            $filter = Filter::findOne(['id' => $filterId]);
-            if (!empty($filter)) {
-                $query->applyFilter($filter);
-            }
-        }
-
-        // Apply timeframe filter if provided
-        if (!empty($timeframe)) {
-            $range = $this->parseTimeframeToDateInterval($timeframe);
-            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-            $dt->sub(new \DateInterval($range));
-            $startDate = $dt->format("Y-m-d H:i:s");
-            $query->andWhere(['>=', 'datetime', $startDate]);
-        }
-
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
-        }
-
-        // Select only specified columns, or all if none specified
-        if (!empty($columns) && is_array($columns)) {
-            $query->select($columns);
-        }
-
-        $filteredData = $query
-            ->orderBy(['datetime' => SORT_DESC, 'id' => SORT_DESC])
-            ->limit(10)
-            ->offset(10 * $page)
-            ->asArray()
-            ->all();
-
-        Yii::$app->cache->flush();
-
-        return $filteredData;
-    }
-
-    /**
-     * Get count of filtered events for table widget
-     * @param integer $filterId
-     * @param string $timeframe
-     * @param string $sinceTimestamp - timestamp for incremental updates
-     * @return integer
-     */
-    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '', $sinceTimestamp = null)
-    {
-        $query = SecurityEvents::find();
-        $query->select(["count(*) as count"]);
-
-        // Apply filter if provided
-        if (!empty($filterId)) {
-            $filter = Filter::findOne(['id' => $filterId]);
-            if (!empty($filter)) {
-                $query->applyFilter($filter);
-            }
-        }
-
-        // Apply timeframe filter if provided
-        if (!empty($timeframe)) {
-            $range = $this->parseTimeframeToDateInterval($timeframe);
-            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-            $dt->sub(new \DateInterval($range));
-            $startDate = $dt->format("Y-m-d H:i:s");
-            $query->andWhere(['>=', 'datetime', $startDate]);
-        }
-
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
-        }
-
-        $result = $query->asArray()->one();
-        Yii::$app->cache->flush();
-
-        return isset($result['count']) ? intval($result['count']) : 0;
-    }
-
-    /**
-     * Get filtered events grouped by country for choropleth map
-     * @param integer $filterId
-     * @param string $locationType - 'source' or 'destination'
-     * @param string $timeframe
-     * @param string $sinceTimestamp - timestamp for incremental updates
-     * @return array
-     */
-    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null, $sinceTimestamp = null)
-    {
-        $query = SecurityEvents::find();
-        
-        // Select appropriate fields based on location type
-        if ($locationType === 'destination') {
-            $query->select([
-                "COALESCE(destination_country, destination_code) as country",
-                "destination_code as code",
-                "count(*) as count"
-            ])
-            ->groupBy(["destination_code", "destination_country"])
-            ->orderBy(['count' => SORT_DESC]);
-        } else {
-            // Default to source
-            $query->select([
-                "COALESCE(source_country, source_code) as country",
-                "source_code as code",
-                "count(*) as count"
-            ])
-            ->groupBy(["source_code", "source_country"])
-            ->orderBy(['count' => SORT_DESC]);
-        }
-
-        // Apply filter if provided
-        if (!empty($filterId)) {
-            $filter = Filter::findOne(['id' => $filterId]);
-            if (!empty($filter)) {
-                $query->applyFilter($filter);
-            }
-        }
-
-        // Apply timeframe filter if provided
-        if (!empty($timeframe)) {
-            $range = $this->parseTimeframeToDateInterval($timeframe);
-            $dt = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-            $dt->sub(new \DateInterval($range));
-            $startDate = $dt->format("Y-m-d H:i:s");
-            $query->andWhere(['>=', 'datetime', $startDate]);
-        }
-
-        // Apply timestamp filter if provided (for incremental updates)
-        if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
-        }
-
-        $filteredData = $query->asArray()->all();
-        
-        // Filter out entries with null or empty codes
-        $filteredData = array_filter($filteredData, function($item) {
-            return !empty($item['code']);
-        });
-        
-        Yii::$app->cache->flush();
-
-        return array_values($filteredData);
     }
 }
