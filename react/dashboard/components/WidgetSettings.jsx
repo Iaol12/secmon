@@ -62,7 +62,8 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
       <div className={`modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4>{formData.title || 'Widget'} - Options</h4>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
+            ×
           </button>
         </div>
         
@@ -251,12 +252,12 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                     </div>
 
                     <div className="form-group">
-                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <label className="show-labels-row" htmlFor="showLabels">
                         <input
+                          id="showLabels"
                           type="checkbox"
                           checked={formData.config.show_labels}
                           onChange={(e) => updateConfigField('show_labels', e.target.checked)}
-                          style={{ marginRight: '8px' }}
                         />
                         Show Labels
                       </label>

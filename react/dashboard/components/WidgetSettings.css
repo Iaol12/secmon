@@ -4,6 +4,35 @@
   width: 90%;
 }
 
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #6b7280;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.modal-close-btn:hover {
+  color: #111827;
+}
+
+.form-group .show-labels-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0;
+}
+.form-group .show-labels-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
 .modal-body-container {
   display: grid;
   grid-template-columns: 1fr;
