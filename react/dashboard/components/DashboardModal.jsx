@@ -4,7 +4,7 @@ import './DashboardModal.css';
 const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
   const [formData, setFormData] = useState({
     name: '',
-    refresh_time: '10S'
+    refresh_time: '5S'
   });
 
   const [errors, setErrors] = useState({});
@@ -14,12 +14,12 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
     if (dashboard && mode === 'edit') {
       setFormData({
         name: dashboard.name || '',
-        refresh_time: dashboard.refresh_time || '10S'
+        refresh_time: dashboard.refresh_time || '5S'
       });
     } else if (mode === 'create') {
       setFormData({
         name: '',
-        refresh_time: '10S'
+        refresh_time: '5S'
       });
     }
   }, [dashboard, mode, isOpen]);
@@ -50,7 +50,7 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
   };
 
   const handleClose = () => {
-    setFormData({ name: '', refresh_time: '10S' });
+    setFormData({ name: '', refresh_time: '5S' });
     setErrors({});
     onClose();
   };
@@ -124,7 +124,7 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
               value={formData.refresh_time}
               onChange={handleChange}
               className={errors.refresh_time ? 'error' : ''}
-              placeholder="e.g., 10S, 5m, 1H"
+              placeholder="e.g., 5S, 5m, 1H"
             />
             {errors.refresh_time && <span className="error-message">{errors.refresh_time}</span>}
             <small className="form-hint">

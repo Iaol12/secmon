@@ -11,6 +11,7 @@ import ReactDOM from 'react-dom';
 
 const WidgetCard = ({ 
   widget, 
+  refreshInterval = 0,
   onWidgetUpdate, 
   onDelete,
   isViewMode = false
@@ -44,24 +45,19 @@ const WidgetCard = ({
     if (hasContent) {
       // Initial load
       loadContent(true);
-      
-      // Setup polling - for tables always fetch page 1 (don't change currentPage)
-      const interval = setInterval(() => {
-        if (widget.chart_type === 'table') {
-          // For tables, fetch page 1 data to keep it fresh, but don't navigate user away
-          loadTablePage1();
-        } else {
-          // Other charts: normal polling
-          loadContent(false);
-        }
-      }, 5000);
-      setPollInterval(interval);
-      
-      return () => {
-        if (interval) {
-          clearInterval(interval);
-        }
-      };
+
+      if (refreshInterval > 0) {
+        const interval = setInterval(() => {
+          if (widget.chart_type === 'table') {
+            loadTablePage1();
+          } else {
+            loadContent(false);
+          }
+        }, refreshInterval * 1000);
+        setPollInterval(interval);
+
+        return () => clearInterval(interval);
+      }
     } else {
       // Clear polling if no content
       if (pollInterval) {
@@ -69,7 +65,7 @@ const WidgetCard = ({
         setPollInterval(null);
       }
     }
-  }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config]);
+  }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config, refreshInterval]);
 
   // Helper to fetch page 1 without changing user's current page
   const loadTablePage1 = async () => {

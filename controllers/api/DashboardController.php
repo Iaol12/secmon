@@ -81,7 +81,7 @@ class DashboardController extends Controller
             $dashboard->name = 'Default Dashboard';
             $dashboard->user_id = $userId;
             $dashboard->active = 1;
-            $dashboard->refresh_time = '10S';
+            $dashboard->refresh_time = '5S';
             if ($dashboard->save()) {
                 $dashboards[] = $dashboard;
             } else {

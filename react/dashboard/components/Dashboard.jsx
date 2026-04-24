@@ -378,6 +378,7 @@ const Dashboard = () => {
             <div key={widget.id.toString()}>
               <WidgetCard
                 widget={widget}
+                refreshInterval={refreshTime}
                 onWidgetUpdate={handleWidgetUpdate}
                 onDelete={handleWidgetDelete}
                 isViewMode={isViewMode}
