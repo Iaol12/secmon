@@ -106,7 +106,11 @@ export default function GeoMap({ data }) {
             Loading map...
           </div>
         ) : (
-          <ComposableMap>
+          <ComposableMap
+            className="geomap-svg"
+            style={{ width: '100%', height: '100%' }}
+            preserveAspectRatio="xMidYMid meet"
+          >
             <Geographies geography={geographiesData}>
               {({ geographies }) =>
                 geographies.map((geo) => {

@@ -14,6 +14,17 @@
   overflow: hidden;
 }
 
+.geomap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.geomap-svg svg {
+  width: 100%;
+  height: 100%;
+}
+
 .geomap-tooltip {
   position: fixed;
   background: rgba(0, 0, 0, 0.8);

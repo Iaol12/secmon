@@ -37,7 +37,7 @@ const LineChart = ({ data }) => {
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer>
       <RechartsLineChart 
         data={chartData}
         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
@@ -55,15 +55,7 @@ const LineChart = ({ data }) => {
           label={{ value: 'Count', angle: -90, position: 'insideLeft' }}
           tick={{ fontSize: 12 }}
         />
-        <Tooltip 
-          contentStyle={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            border: '1px solid #ccc',
-            borderRadius: '4px'
-          }}
-        />
-        <Legend 
-          wrapperStyle={{ paddingTop: '20px' }}
+        <Tooltip
         />
         <Line 
           type="monotone"

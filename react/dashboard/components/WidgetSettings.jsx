@@ -369,7 +369,7 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                       <option value="destination">Destination Locations</option>
                     </select>
                     <small style={{ display: 'block', color: '#666', marginTop: '4px' }}>
-                      Choose whether to show source or destination address locations by default
+                      Choose whether to show source or destination address locations
                     </small>
                   </div>
                 )}
