@@ -73,6 +73,7 @@ class ChartDataService
         $now = $this->getBratislavaNow();
         $current = $this->anchorToIntervalBoundary($startDate, $granularity);
         $phpDateFormat = $this->getPhpDateFormat($granularity);
+        $chartLabelFormat = $this->getChartLabelFormat($granularity);
 
         for ($index = 0; $current <= $now; $current->add($interval)) {
             $currentEnd = clone $current;
@@ -85,7 +86,7 @@ class ChartDataService
                 $index++;
             }
 
-            $chartData[] = ['x' => $current->format('d.m.Y G:i'), 'y' => $currentValue];
+            $chartData[] = ['x' => $current->format($chartLabelFormat), 'y' => $currentValue];
         }
 
         return $chartData;
@@ -323,6 +324,18 @@ class ChartDataService
 
         return 'Y-m-d';
     }
+
+    private function getChartLabelFormat(string $granularity): string
+    {
+        $g = rtrim(strtolower($granularity), 's');
+
+        if (preg_match('/^(\d+)\s*(week|month|year|w|m|y)$/i', $g)) {
+            return 'd.m.Y';
+        }
+
+        return 'd.m.Y G:i';
+    }
+
     private function anchorToIntervalBoundary(\DateTime $dt, string $granularity): \DateTime
     {
         $g = rtrim(strtolower($granularity), 's');
