@@ -8,7 +8,7 @@ use Yii;
 
 class ChartDataService
 {
-    public function getFilteredEventsPieChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
+    public function getFilteredEventsPieChart($filterId, $field, $timeframe = null, $lastId = null)
     {
         $query = SecurityEvents::find();
         $query->select([
@@ -20,7 +20,7 @@ class ChartDataService
 
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $filteredData = $query->asArray()->all();
         Yii::$app->cache->flush();
@@ -28,7 +28,7 @@ class ChartDataService
         return $filteredData;
     }
 
-    public function getFilteredEventsBarChart($filterId, $field, $timeframe = null, $sinceTimestamp = null)
+    public function getFilteredEventsBarChart($filterId, $field, $timeframe = null, $lastId = null)
     {
         $query = SecurityEvents::find();
         $query->select([
@@ -40,7 +40,7 @@ class ChartDataService
 
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $filteredData = $query->asArray()->all();
         Yii::$app->cache->flush();
@@ -48,7 +48,7 @@ class ChartDataService
         return $filteredData;
     }
 
-    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H', $sinceTimestamp = null)
+    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H', $lastId = null)
     {
         $range = !empty($timeframe) ? $this->parseTimeframeToDateInterval($timeframe) : 'P1W';
         $interval = new \DateInterval($this->parseGranularityToDateInterval($granularity));
@@ -65,7 +65,7 @@ class ChartDataService
             ->andWhere(['>', 'datetime', $startDateString]);
 
         $this->applyFilterIfPresent($query, $filterId);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $filteredData = $query->asArray()->all();
         $chartData = [];
@@ -90,7 +90,7 @@ class ChartDataService
         return $chartData;
     }
 
-    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '', $sinceTimestamp = null)
+    public function getFilteredEventsTableWidget($filterId, $page, $columns = [], $timeframe = '', $lastId = null)
     {
         if (!in_array('id', $columns, true)) {
             $columns[] = 'id';
@@ -105,7 +105,7 @@ class ChartDataService
 
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $filteredData = $query
             ->orderBy(['datetime' => SORT_DESC, 'id' => SORT_DESC])
@@ -119,7 +119,7 @@ class ChartDataService
         return $filteredData;
     }
 
-    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null, $sinceTimestamp = null)
+    public function getFilteredEventsGeoMap($filterId, $locationType = 'source', $timeframe = null, $lastId = null)
     {
         $query = SecurityEvents::find();
 
@@ -143,7 +143,7 @@ class ChartDataService
 
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $filteredData = $query->asArray()->all();
 
@@ -156,14 +156,14 @@ class ChartDataService
         return array_values($filteredData);
     }
 
-    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '', $sinceTimestamp = null)
+    public function getFilteredEventsCountForTableWidget($filterId, $timeframe = '', $lastId = null)
     {
         $query = SecurityEvents::find();
         $query->select(['count(*) as count']);
 
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
-        $this->applySinceTimestampFilter($query, $sinceTimestamp);
+        $this->applySinceIdFilter($query, $lastId);
 
         $result = $query->asArray()->one();
         Yii::$app->cache->flush();
@@ -195,13 +195,26 @@ class ChartDataService
         $query->andWhere(['>=', 'datetime', $startDate->format('Y-m-d H:i:s')]);
     }
 
-    private function applySinceTimestampFilter($query, $sinceTimestamp): void
+    public function getLatestFilteredEventId($filterId, $timeframe = null): int
     {
-        if (empty($sinceTimestamp)) {
+        $query = SecurityEvents::find();
+        $query->select(['max(id) as max_id']);
+
+        $this->applyFilterIfPresent($query, $filterId);
+        $this->applyTimeframeFilter($query, $timeframe);
+
+        $result = $query->asArray()->one();
+
+        return isset($result['max_id']) ? (int) $result['max_id'] : 0;
+    }
+
+    private function applySinceIdFilter($query, $lastId): void
+    {
+        if ($lastId === null || $lastId === '' || !is_numeric($lastId)) {
             return;
         }
-        $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-        return;
+
+        $query->andWhere(['>', 'id', (int) $lastId]);
     }
 
     private function getBratislavaNow(): \DateTime

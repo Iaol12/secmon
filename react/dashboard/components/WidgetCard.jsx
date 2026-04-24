@@ -20,7 +20,7 @@ const WidgetCard = ({
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pollInterval, setPollInterval] = useState(null);
-  const lastFetchTimestampRef = useRef(null);
+  const lastFetchedIdRef = useRef(null);
   const currentPageRef = useRef(1);
 
   const config = JSON.parse(widget.config || '{}');
@@ -180,35 +180,28 @@ const WidgetCard = ({
 
   const loadContent = async (isInitial = false) => {
     if (!isInitial) {
-      // Only set loading once for the first load
       setIsLoading(false);
     } else {
       setIsLoading(true);
     }
 
     try {
-      // For table charts, use pagination. For others, send only delta timestamp
       const pageParam = widget.chart_type === 'table' ? Number(currentPage) || 1 : null;
-      const timestamp = (widget.chart_type === 'table' || isInitial) ? null : lastFetchTimestampRef.current;
-      
-      const data = await api.getWidgetContent(widget.id, pageParam, timestamp);
+      const lastId = (widget.chart_type === 'table' || isInitial) ? null : lastFetchedIdRef.current;
+
+      const data = await api.getWidgetContent(widget.id, pageParam, lastId);
       
       if (data) {
-        // Store the response timestamp for next poll (only for non-table charts)
-        if (data.timestamp && widget.chart_type !== 'table') {
-          lastFetchTimestampRef.current = data.timestamp;
+        if (widget.chart_type !== 'table' && data.lastId !== undefined && data.lastId !== null) {
+          lastFetchedIdRef.current = Number(data.lastId);
         }
 
-        // For initial load, just set the data
         if (isInitial) {
           setContentData(data);
         } else {
-          // For subsequent polls
           if (widget.chart_type === 'table') {
-            // Tables: complete refresh (simple)
             setContentData(data);
           } else {
-            // Other charts: merge delta data
             setContentData(prevData => {
               if (!prevData) return data;
               
@@ -235,8 +228,7 @@ const WidgetCard = ({
       if (result.success && result.widget) {
         onWidgetUpdate(result.widget);
         setShowSettings(false);
-        // Reset timestamp on settings change
-        lastFetchTimestampRef.current = null;
+        lastFetchedIdRef.current = null;
       }
     } catch (error) {
       console.error('Error saving settings:', error);

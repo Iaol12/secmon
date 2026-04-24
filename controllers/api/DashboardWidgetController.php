@@ -65,10 +65,10 @@ class DashboardWidgetController extends Controller
      * Get dashboard widget with filter applied content
      * @param integer $widgetId
      * @param integer $pagination
-     * @param string $sinceTimestamp - timestamp for incremental updates (ISO 8601 format)
+     * @param integer|string|null $lastId
      * @return array
      */
-    public function actionContent($widgetId, $pagination = 1, $sinceTimestamp = null)
+    public function actionContent($widgetId, $pagination = 1, $lastId = null)
     {
         $this->checkAccess();
         
@@ -83,11 +83,6 @@ class DashboardWidgetController extends Controller
 
         $chartType = $widget->chart_type;
         $timeframe = $widget->timeframe ?? "";
-        
-        // Generate timestamp in UTC for consistency with database
-        $dt = new \DateTime('now', new \DateTimeZone('UTC'));
-        $currentTimestamp = $dt->format('Y-m-d H:i:s');
-
         $config = is_string($widget->config) ? Json::decode($widget->config) : $widget->config;
         switch ($chartType) {
             case "pieChart":
@@ -97,8 +92,8 @@ class DashboardWidgetController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'timestamp' => $currentTimestamp,
-                    'data' => $this->chartDataService->getFilteredEventsPieChart($widget->filter_id, $field, $timeframe, $sinceTimestamp)
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $timeframe),
+                    'data' => $this->chartDataService->getFilteredEventsPieChart($widget->filter_id, $field, $timeframe, $lastId)
                 ];
                 
             case "barChart":
@@ -108,17 +103,18 @@ class DashboardWidgetController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'timestamp' => $currentTimestamp,
-                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $field, $timeframe, $sinceTimestamp)
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $timeframe),
+                    'data' => $this->chartDataService->getFilteredEventsBarChart($widget->filter_id, $field, $timeframe, $lastId)
                 ];
                 
             case "lineChart":
                 $granularity = $config['granularity'] ?? '6H';
+                $lineTimeframe = !empty($timeframe) ? $timeframe : '1W';
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'timestamp' => $currentTimestamp,
-                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe, $granularity, $sinceTimestamp)
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $lineTimeframe),
+                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe, $granularity, $lastId)
                 ];
                 
             case "table":
@@ -126,13 +122,13 @@ class DashboardWidgetController extends Controller
                 $columns = $config['table_columns'] ?? ['id', 'datetime', 'device_host_name', 'application_protocol'];
                 $timeframe = $widget->timeframe ?? '';
                 
-                $filteredData = $this->chartDataService->getFilteredEventsTableWidget($widget->filter_id, $pagination, $columns, $timeframe, $sinceTimestamp);
-                $count = $this->chartDataService->getFilteredEventsCountForTableWidget($widget->filter_id, $timeframe, $sinceTimestamp);
+                $filteredData = $this->chartDataService->getFilteredEventsTableWidget($widget->filter_id, $pagination, $columns, $timeframe, $lastId);
+                $count = $this->chartDataService->getFilteredEventsCountForTableWidget($widget->filter_id, $timeframe, $lastId);
 
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'timestamp' => $currentTimestamp,
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $timeframe),
                     'pagination' => [
                         'page' => $pagination,
                         'total' => $count,
@@ -147,8 +143,8 @@ class DashboardWidgetController extends Controller
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'timestamp' => $currentTimestamp,
-                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $locationType, $timeframe, $sinceTimestamp)
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $timeframe),
+                    'data' => $this->chartDataService->getFilteredEventsGeoMap($widget->filter_id, $locationType, $timeframe, $lastId)
                 ];
                 
             default:
