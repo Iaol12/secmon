@@ -33,6 +33,12 @@ const PieChart = ({ data, config }) => {
     value: item.count || item.y || 0
   }));
 
+  const animationConfig = {
+    isAnimationActive: true,
+    animationDuration: 550,
+    animationEasing: 'ease-out'
+  };
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
@@ -79,6 +85,7 @@ const PieChart = ({ data, config }) => {
         innerRadius={config.innerRadius || "0%"}
         fill="#8884d8"
         dataKey="value"
+        {...animationConfig}
       >
         {chartData.map((entry, index) => (
           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

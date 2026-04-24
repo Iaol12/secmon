@@ -30,6 +30,12 @@ const BarChart = ({ data }) => {
     value: item.y || item.count || 0
   }));
 
+  const animationConfig = {
+    isAnimationActive: true,
+    animationDuration: 450,
+    animationEasing: 'ease-out'
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsBarChart 
@@ -62,6 +68,7 @@ const BarChart = ({ data }) => {
           fill="#039be5" 
           name="Count"
           radius={[8, 8, 0, 0]}
+          {...animationConfig}
         />
       </RechartsBarChart>
     </ResponsiveContainer>

@@ -30,6 +30,12 @@ const LineChart = ({ data }) => {
     value: item.y || item.count || 0
   }));
 
+  const animationConfig = {
+    isAnimationActive: true,
+    animationDuration: 500,
+    animationEasing: 'ease-out'
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsLineChart 
@@ -67,6 +73,7 @@ const LineChart = ({ data }) => {
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}
           name="Value"
+          {...animationConfig}
         />
       </RechartsLineChart>
     </ResponsiveContainer>
