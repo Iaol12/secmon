@@ -21,6 +21,7 @@ const WidgetCard = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pollInterval, setPollInterval] = useState(null);
   const lastFetchTimestampRef = useRef(null);
+  const currentPageRef = useRef(1);
 
   const config = JSON.parse(widget.config || '{}');
   const hasContent = widget.chart_type !== null && widget.chart_type !== undefined && widget.chart_type !== '';
@@ -30,14 +31,29 @@ const WidgetCard = ({
     setCurrentPage(1);
   }, [widget.chart_type, widget.config]);
 
+  // Fetch data when page changes (for tables only)
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+    if (hasContent && widget.chart_type === 'table') {
+      loadContent(false);
+    }
+  }, [currentPage]);
+
   // Initial load and setup polling
   useEffect(() => {
     if (hasContent) {
-      // Initial load without timestamp
+      // Initial load
       loadContent(true);
-      // Setup 5-second polling
+      
+      // Setup polling - for tables always fetch page 1 (don't change currentPage)
       const interval = setInterval(() => {
-        loadContent(false);
+        if (widget.chart_type === 'table') {
+          // For tables, fetch page 1 data to keep it fresh, but don't navigate user away
+          loadTablePage1();
+        } else {
+          // Other charts: normal polling
+          loadContent(false);
+        }
       }, 5000);
       setPollInterval(interval);
       
@@ -54,6 +70,21 @@ const WidgetCard = ({
       }
     }
   }, [widget.id, widget.filter_id, widget.timeframe, widget.chart_type, widget.config]);
+
+  // Helper to fetch page 1 without changing user's current page
+  const loadTablePage1 = async () => {
+    try {
+      const data = await api.getWidgetContent(widget.id, 1, null);
+      if (data) {
+        // Only update if user is on page 1, otherwise keep their current page data
+        if (currentPageRef.current === 1) {
+          setContentData(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing table:', error);
+    }
+  };
 
   // Merge delta data based on chart type
   const mergeData = (existingData, newDeltaData, chartType) => {
@@ -89,9 +120,11 @@ const WidgetCard = ({
     const merged = [...existing];
     
     delta.forEach(newItem => {
-      const existingItem = merged.find(item => 
-        (item.label === newItem.label || item.x === newItem.x || item.name === newItem.name)
-      );
+      // For bar/pie charts, match strictly by label to avoid cross-contamination
+      const matchKey = newItem.label !== undefined ? 'label' : (newItem.x !== undefined ? 'x' : 'name');
+      const matchValue = newItem[matchKey];
+      
+      const existingItem = merged.find(item => item[matchKey] === matchValue);
       
       if (existingItem) {
         // Add to existing count
@@ -111,19 +144,18 @@ const WidgetCard = ({
     const merged = [...existing];
     
     delta.forEach(newItem => {
-      const existingItem = merged.find(item => item.x === newItem.x);
+      const existingItemIndex = merged.findIndex(item => item.x === newItem.x);
       
-      if (existingItem) {
-        // Add to existing y value
-        existingItem.y = (existingItem.y || 0) + (newItem.y || 0);
+      if (existingItemIndex !== -1) {
+        // Update existing y value
+        merged[existingItemIndex].y = (merged[existingItemIndex].y || 0) + (newItem.y || 0);
       } else {
-        // New time bucket
+        // Append new time bucket (backend sends sorted, so new items come at end)
         merged.push(newItem);
       }
     });
     
-    // Sort by x to maintain chronological order
-    return merged.sort((a, b) => a.x.localeCompare(b.x));
+    return merged;
   };
 
   // Merge geo map data by country code
@@ -157,13 +189,13 @@ const WidgetCard = ({
     try {
       // For table charts, use pagination. For others, send only delta timestamp
       const pageParam = widget.chart_type === 'table' ? Number(currentPage) || 1 : null;
-      const timestamp = !isInitial && lastFetchTimestampRef.current ? lastFetchTimestampRef.current : null;
+      const timestamp = (widget.chart_type === 'table' || isInitial) ? null : lastFetchTimestampRef.current;
       
       const data = await api.getWidgetContent(widget.id, pageParam, timestamp);
       
       if (data) {
-        // Store the response timestamp for next poll
-        if (data.timestamp) {
+        // Store the response timestamp for next poll (only for non-table charts)
+        if (data.timestamp && widget.chart_type !== 'table') {
           lastFetchTimestampRef.current = data.timestamp;
         }
 
@@ -171,12 +203,12 @@ const WidgetCard = ({
         if (isInitial) {
           setContentData(data);
         } else {
-          // For subsequent polls, merge data (unless it's a table, which gets fresh data)
+          // For subsequent polls
           if (widget.chart_type === 'table') {
-            // Tables should reset to page 1 and show fresh data
+            // Tables: complete refresh (simple)
             setContentData(data);
           } else {
-            // Merge delta data for other chart types
+            // Other charts: merge delta data
             setContentData(prevData => {
               if (!prevData) return data;
               

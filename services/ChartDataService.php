@@ -61,7 +61,7 @@ class ChartDataService
         $value = "count(" . $field . ") as count";
         
         $query->select([$label, $value])
-            ->groupby(["label"])
+            ->groupby([$field])
             ->orderBy(['label' => SORT_ASC]);
 
         if (!empty($filterId)) {
