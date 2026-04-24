@@ -40,11 +40,6 @@ class DashboardWidgetController extends Controller
             ],
         ];
 
-
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-        ];
-
         $behaviors['verbFilter'] = [
             'class' => VerbFilter::class,
             'actions' => [

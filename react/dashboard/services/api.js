@@ -4,29 +4,31 @@ const API_BASE_URL = '/api';
 
 class DashboardAPI {
   constructor() {
-    // this.authToken = 'MEsrdn-6wf7bP-nT8mVJ5YCorYGb1D3m'; 
-    this.authToken = window.dashboardConfig?.authToken || null;
     this.apiClient = axios.create({
       baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true,  // Send session cookies
     });
 
     this.setupAxiosInterceptors();
   }
 
   setupAxiosInterceptors() {
+    // Get CSRF token and add it to requests
     this.apiClient.interceptors.request.use(
       (config) => {
-        if (this.authToken) {
-          config.headers.Authorization = `Bearer ${this.authToken}`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const csrfParam = document.querySelector('meta[name="csrf-param"]')?.content || '_csrf';
+        
+        if (csrfToken) {
+          config.headers[csrfParam] = csrfToken;
         }
+        
         return config;
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error)
     );
   }
 
