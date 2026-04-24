@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './DashboardModal.css';
 
 const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
@@ -8,6 +8,7 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const closeFromOverlayClickRef = useRef(false);
 
   useEffect(() => {
     if (dashboard && mode === 'edit') {
@@ -69,13 +70,28 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
     }
   };
 
+  const handleOverlayMouseDown = (e) => {
+    closeFromOverlayClickRef.current = e.target === e.currentTarget;
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && closeFromOverlayClickRef.current) {
+      handleClose();
+    }
+    closeFromOverlayClickRef.current = false;
+  };
+
   if (!isOpen) return null;
 
   const modalTitle = mode === 'create' ? 'Create New Dashboard' : 'Edit Dashboard';
   const submitButtonText = mode === 'create' ? 'Create' : 'Update';
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div
+      className="modal-overlay"
+      onMouseDown={handleOverlayMouseDown}
+      onClick={handleOverlayClick}
+    >
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{modalTitle}</h2>

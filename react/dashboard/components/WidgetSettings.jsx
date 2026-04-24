@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Select from 'react-select';
 import { useWidgetSettingsForm } from '../hooks/useWidgetSettingsForm';
 import './WidgetSettings.css';
@@ -17,6 +17,7 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
 
   const [activeTab, setActiveTab] = useState('all');
   const [timeframeMode, setTimeframeMode] = useState('preset');
+  const closeFromOverlayClickRef = useRef(false);
   const chartTypes = {
     barChart: { label: 'Bar Chart', icon: 'chart-icon-bar', category: 'categorical' },
     pieChart: { label: 'Pie Chart', icon: 'chart-icon-pie', category: 'categorical' },
@@ -39,10 +40,25 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
     onSave(getSubmitPayload());
   };
 
+  const handleOverlayMouseDown = (e) => {
+    closeFromOverlayClickRef.current = e.target === e.currentTarget;
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && closeFromOverlayClickRef.current) {
+      onClose();
+    }
+    closeFromOverlayClickRef.current = false;
+  };
+
   const isChartSelected = formData.chartType !== '';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-overlay"
+      onMouseDown={handleOverlayMouseDown}
+      onClick={handleOverlayClick}
+    >
       <div className={`modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4>{formData.title || 'Widget'} - Options</h4>
