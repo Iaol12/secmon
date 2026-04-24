@@ -48,8 +48,9 @@ class ChartDataService
         return $filteredData;
     }
 
-    public function getFilteredEventsLineChart($filterId, $timeframe = null, $granularity = '2H', $lastId = null)
+    public function getFilteredEventsLineChart($filterId, $timeframe = null, $lastId = null)
     {
+        $granularity = $this->resolveGranularityForTimeframe($timeframe);
         $range = !empty($timeframe) ? $this->parseTimeframeToDateInterval($timeframe) : 'P1W';
         $interval = new \DateInterval($this->parseGranularityToDateInterval($granularity));
         $sqlGroupingFormat = $this->getSqlGroupingFormat($granularity);
@@ -221,6 +222,23 @@ class ChartDataService
     {
         return new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
     }
+
+    private function resolveGranularityForTimeframe($timeframe): string
+    {
+        switch ($timeframe) {
+            case '1D':
+                return '1h';
+            case '1W':
+            case '1M':
+                return '1d';
+            case '3M':
+                return '1w';
+            case '1Y':
+                return '1m';
+            default:
+                return '1h';
+        }
+    }
         private function parseTimeframeToDateInterval(string $timeframe): string
     {
         $timeUnit = substr($timeframe, -1);
@@ -252,12 +270,6 @@ class ChartDataService
             'h' => 'PT' . $amount . 'H',
         ];
         return $map[$unit] ?? 'P1W';
-    }
-
-    public function isValidISO8601(string $granularity): bool
-    {
-        preg_match('/^(\d+)\s*(hour|day|week|month|year|h|m|d|w|y)s?$/i', rtrim($granularity, 's'), $matches);
-        return !empty($matches);
     }
 
     private function getSqlGroupingFormat(string $granularity): string

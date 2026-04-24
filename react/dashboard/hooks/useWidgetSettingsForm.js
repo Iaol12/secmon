@@ -13,7 +13,6 @@ export const useWidgetSettingsForm = (widget, config) => {
       pie_chart_variable: config.pie_chart_variable || 'cef_severity',
       bar_chart_variable: config.bar_chart_variable || '',
       show_labels: config.show_labels !== undefined ? config.show_labels : true,
-      granularity: config.granularity || '1h',
       location_type: config.location_type || 'source',
       ...config
     }
@@ -61,33 +60,11 @@ export const useWidgetSettingsForm = (widget, config) => {
     }
   };
 
-  const getDefaultGranularityForTimeframe = (timeframe) => {
-    switch (timeframe) {
-      case '1D':
-        return '1h';
-      case '1W':
-        return '1d';
-      case '1M':
-        return '1d';
-      case '3M':
-        return '1w';
-      case '1Y':
-        return '1m';
-      default:
-        return '1h';
-    }
-  };
-
   const updateFormField = (field, value) => {
-    setFormData(prev => {
-      const updated = { ...prev, [field]: value };
-      if (field === 'timeframe' && prev.chartType === 'lineChart') {
-        const defaultGranularity = getDefaultGranularityForTimeframe(value);
-        updated.config = { ...prev.config, granularity: defaultGranularity };
-      }
-      
-      return updated;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const updateConfigField = (field, value) => {
@@ -114,10 +91,6 @@ export const useWidgetSettingsForm = (widget, config) => {
 
       case 'barChart':
         dynamicConfig.bar_chart_variable = currentConfig.bar_chart_variable;
-        break;
-
-      case 'lineChart':
-        dynamicConfig.granularity = currentConfig.granularity;
         break;
 
       case 'geoMap':

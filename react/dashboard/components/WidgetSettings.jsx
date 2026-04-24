@@ -290,40 +290,6 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
                   </div>
                 )}
 
-                {formData.chartType === 'lineChart' && (
-                  <div className="form-group">
-                    <label htmlFor="granularity">Granularity</label>
-                    <div className="granularity-slider-container">
-                      <input
-                        id="granularity"
-                        type="range"
-                        min="0"
-                        max="4"
-                        value={['1h', '6h', '12h', '1d', '1w'].indexOf(formData.config.granularity)}
-                        onChange={(e) => {
-                          const granularities = ['1h', '6h', '12h', '1d', '1w'];
-                          updateConfigField('granularity', granularities[parseInt(e.target.value)]);
-                        }}
-                        className="granularity-slider"
-                      />
-                      <div className="granularity-labels">
-                        <span>1h</span>
-                        <span>6h</span>
-                        <span>12h</span>
-                        <span>1d</span>
-                        <span>1w</span>
-                      </div>
-                      <div className="granularity-value">
-                        {formData.config.granularity === '1h' && 'Hourly'}
-                        {formData.config.granularity === '6h' && '6 Hourly'}
-                        {formData.config.granularity === '12h' && '12 Hourly'}
-                        {formData.config.granularity === '1d' && 'Daily'}
-                        {formData.config.granularity === '1w' && 'Weekly'}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {formData.chartType === 'table' && (
                   <div className="form-group">
                     <label htmlFor="tableColumns">Table Columns (Select Multiple)</label>

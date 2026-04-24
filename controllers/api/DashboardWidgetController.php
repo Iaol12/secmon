@@ -108,13 +108,11 @@ class DashboardWidgetController extends Controller
                 ];
                 
             case "lineChart":
-                $granularity = $config['granularity'] ?? '6H';
-                $lineTimeframe = !empty($timeframe) ? $timeframe : '1W';
                 return [
                     'chartType' => $chartType,
                     'timeframe' => $timeframe,
-                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $lineTimeframe),
-                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe, $granularity, $lastId)
+                    'lastId' => $this->chartDataService->getLatestFilteredEventId($widget->filter_id, $timeframe),
+                    'data' => $this->chartDataService->getFilteredEventsLineChart($widget->filter_id, $timeframe, $lastId)
                 ];
                 
             case "table":
@@ -238,13 +236,6 @@ class DashboardWidgetController extends Controller
                     $config = $configArray;
                 } else {
                     throw new \yii\web\BadRequestHttpException('Invalid variable for bar chart configuration.');
-                }
-            }
-            elseif($chartType == 'lineChart') {
-                if (!empty($configArray['granularity']) && $this->chartDataService->isValidISO8601($configArray['granularity'])) {
-                    $config = $configArray;
-                } else {
-                    throw new \yii\web\BadRequestHttpException('Invalid time granularity for line chart configuration.');
                 }
             }
 
