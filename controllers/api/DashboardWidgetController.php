@@ -195,6 +195,8 @@ class DashboardWidgetController extends Controller
                 throw new ForbiddenHttpException('You do not have permission to use this filter.');
             }
             $widget->filter_id = $filterId;
+        } else{
+            $widget->filter_id = null; // Clear filter if not provided
         }
         
         if (!empty($title)) {

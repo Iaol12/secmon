@@ -72,8 +72,10 @@ class EventGeneratorController extends Controller
                     $event->transport_protocol = rand(0, 1) ? 'tcp' : 'udp';
                     $event->bytes_in = rand(1000, 1000000);
                     $event->bytes_out = rand(1000, 1000000);
-                    $event->source_country = 'US';
-                    $event->destination_country = 'US';
+                    $event->source_code = 'US';
+                    $event->destination_code= 'US';
+                    $event->source_country = 'United States';
+                    $event->destination_country = 'United States';
                     $event->analyzed = false;
                     $event->raw_event = 'CEF:0|' . $event->cef_vendor . '|' . $event->cef_device_product . '|' . $event->cef_device_version . '|' . $event->cef_event_class_id . '|' . $event->cef_name . '|' . $event->cef_severity . '|';
 

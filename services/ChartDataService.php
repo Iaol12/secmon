@@ -140,7 +140,8 @@ class ChartDataService
         $filteredData = $query->asArray()->all();
         $chartData = [];
         $now = new \DateTime('now', new \DateTimeZone('Europe/Bratislava'));
-        $dt = $this->adjustStartDateForGranularity($dt, $granularity);
+        // Anchor start date to fixed interval boundaries (not relative to current time)
+        $dt = $this->anchorToIntervalBoundary($dt, $granularity);
         $phpDateFormat = $this->getPhpDateFormat($granularity);
         $i = 0;
         
@@ -237,6 +238,48 @@ class ChartDataService
 
         return $adjustedDt < $dt ? $dt : $adjustedDt;
     }
+
+    /**
+     * Anchor a DateTime to the nearest fixed interval boundary in the past
+     * This ensures intervals remain consistent over time for real-time updates
+     */
+    private function anchorToIntervalBoundary(\DateTime $dt, string $granularity): \DateTime
+    {
+        $g = rtrim(strtolower($granularity), 's');
+        $anchored = clone $dt;
+
+        if (strpos($g, 'year') !== false || strpos($g, 'y') !== false) {
+            // Anchor to January 1st of that year
+            $anchored->setDate($anchored->format('Y'), 1, 1);
+            $anchored->setTime(0, 0, 0);
+        } elseif (strpos($g, 'month') !== false || strpos($g, 'mon') !== false) {
+            // Anchor to first day of that month
+            $anchored->setDate($anchored->format('Y'), $anchored->format('m'), 1);
+            $anchored->setTime(0, 0, 0);
+        } elseif (strpos($g, 'week') !== false || strpos($g, 'w') !== false) {
+            // Anchor to Monday of that week
+            $anchored->setISODate($anchored->format('Y'), $anchored->format('W'), 1);
+            $anchored->setTime(0, 0, 0);
+        } elseif (strpos($g, 'day') !== false || strpos($g, 'd') !== false) {
+            // Anchor to midnight of that day
+            $anchored->setTime(0, 0, 0);
+        } elseif (strpos($g, 'hour') !== false || strpos($g, 'h') !== false) {
+            // Anchor to the top of the hour
+            preg_match('/^(\d+)\s*h/i', $g, $matches);
+            if (!empty($matches[1])) {
+                $hours = intval($matches[1]);
+                $currentHour = intval($anchored->format('H'));
+                // Round down to nearest interval boundary
+                $boundaryHour = floor($currentHour / $hours) * $hours;
+                $anchored->setTime($boundaryHour, 0, 0);
+            } else {
+                $anchored->setTime($anchored->format('H'), 0, 0);
+            }
+        }
+
+        return $anchored;
+    }
+
 
     /**
      * Get filtered events for table widget with specified columns
@@ -405,16 +448,9 @@ class ChartDataService
 
         // Apply timestamp filter if provided (for incremental updates)
         if (!empty($sinceTimestamp)) {
-            // Subtract small buffer to avoid missing edge-case events due to precision
-            try {
-                $dt = new \DateTime($sinceTimestamp, new \DateTimeZone('UTC'));
-                $dt->sub(new \DateInterval('PT1S'));
-                $safeTimestamp = $dt->format("Y-m-d H:i:s");
-                $query->andWhere(['>', 'datetime', $safeTimestamp]);
-            } catch (\Exception $e) {
-                // If parsing fails, just use the timestamp as-is
-                $query->andWhere(['>', 'datetime', $sinceTimestamp]);
-            }
+            // Use the timestamp as-is for consistency with other methods
+            // The buffer avoids precision issues but should not exceed event interval
+            $query->andWhere(['>', 'datetime', $sinceTimestamp]);
         }
 
         $filteredData = $query->asArray()->all();

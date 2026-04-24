@@ -118,7 +118,7 @@ export default function GeoMap({ data }) {
                     <Geography
                       key={geo.rsmKey}
                       geography={geo}
-                      onMouseEnter={() => setHoveredCountry({ name: geo.properties.name, code: countryCode, count: eventCount })}
+                      onMouseEnter={() => setHoveredCountry({ name: geo.properties.name, code: countryCode })}
                       onMouseLeave={() => setHoveredCountry(null)}
                       style={{
                         default: {
@@ -158,7 +158,7 @@ export default function GeoMap({ data }) {
         <div className="geomap-tooltip">
           <strong>{hoveredCountry.name}</strong>
           <br />
-          Events: {hoveredCountry.count}
+          Events: {eventsByCode[hoveredCountry.code] || 0}
         </div>
       )}
     </div>
