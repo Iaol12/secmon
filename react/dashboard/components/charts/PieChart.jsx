@@ -32,6 +32,7 @@ const PieChart = ({ data, config }) => {
     name: item.label || item.x || 'Unknown',
     value: item.count || item.y || 0
   }));
+  const selectedVariable = config?.pie_chart_variable || 'value';
 
   const animationConfig = {
     isAnimationActive: true,
@@ -96,6 +97,7 @@ const PieChart = ({ data, config }) => {
           verticalAlign="bottom" 
           height={36}
           wrapperStyle={{ fontSize: '12px' }}
+          formatter={(value) => `${selectedVariable}: ${value}`}
         />}
     </RechartsPieChart>
   );

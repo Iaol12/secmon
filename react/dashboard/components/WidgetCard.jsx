@@ -290,7 +290,7 @@ const WidgetCard = ({
 
     switch (chartType) {
       case 'barChart':
-        return <BarChart data={contentData.data} />;
+        return <BarChart data={contentData.data} config={config} />;
       case 'pieChart':
         return <PieChart data={contentData.data} config={config} />;
       case 'lineChart':

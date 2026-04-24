@@ -10,7 +10,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-const BarChart = ({ data }) => {
+const BarChart = ({ data, config = {} }) => {
   if (!data || data.length === 0) {
     return (
       <div style={{ 
@@ -29,6 +29,8 @@ const BarChart = ({ data }) => {
     name: item.x || item.label || 'Unknown',
     value: item.y || item.count || 0
   }));
+  const selectedVariable = config.bar_chart_variable || 'value';
+  const legendLabel = `Count (${selectedVariable})`;
 
   const animationConfig = {
     isAnimationActive: true,
@@ -66,7 +68,7 @@ const BarChart = ({ data }) => {
         <Bar 
           dataKey="value" 
           fill="#039be5" 
-          name="Count"
+          name={legendLabel}
           radius={[8, 8, 0, 0]}
           {...animationConfig}
         />
