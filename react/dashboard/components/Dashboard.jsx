@@ -46,20 +46,6 @@ const Dashboard = () => {
       }
   }, [currentDashboardId, dashboards]);
 
-  useEffect(() => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval);
-    }
-
-    if (refreshTime > 0) {
-      const interval = setInterval(() => {
-        loadDashboard(currentDashboardId, false);
-      }, refreshTime * 1000);
-      setRefreshInterval(interval);
-
-      return () => clearInterval(interval);
-    }
-  }, [refreshTime, currentDashboardId]);
 
   const loadDashboard = async (dashboardId, changeActive = true) => {
     try {

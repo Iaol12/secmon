@@ -124,7 +124,7 @@ class DashboardAPI {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error updating widget settings ${widgetId}:`, error);
+      console.error(`Error updating widget settings`);
       throw error;
     }
   }
