@@ -2,6 +2,8 @@
 
 namespace app\services;
 
+use app\components\filter\CompareFilterRule;
+use app\components\filter\FilterQuery;
 use app\models\SecurityEvents;
 use app\models\Filter;
 use Yii;
@@ -167,7 +169,8 @@ class ChartDataService
         $this->applyTimeframeFilter($query, $timeframe);
         $this->applySinceIdFilter($query, $lastId);
 
-        $result = $query->asArray()->one();
+        $resultRows = $query->asArray()->all();
+        $result = $resultRows[0] ?? null;
         Yii::$app->cache->flush();
 
         return isset($result['count']) ? intval($result['count']) : 0;
@@ -205,7 +208,8 @@ class ChartDataService
         $this->applyFilterIfPresent($query, $filterId);
         $this->applyTimeframeFilter($query, $timeframe);
 
-        $result = $query->asArray()->one();
+        $resultRows = $query->asArray()->all();
+        $result = $resultRows[0] ?? null;
 
         return isset($result['max_id']) ? (int) $result['max_id'] : 0;
     }
@@ -213,6 +217,16 @@ class ChartDataService
     private function applySinceIdFilter($query, $lastId): void
     {
         if ($lastId === null || $lastId === '' || !is_numeric($lastId)) {
+            return;
+        }
+
+        if ($query instanceof FilterQuery) {
+            $query->applyRule(new CompareFilterRule([
+                'logic_operator' => 'AND',
+                'column' => 'id',
+                'operator' => '>',
+                'value' => (int) $lastId,
+            ]));
             return;
         }
 
