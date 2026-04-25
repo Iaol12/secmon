@@ -151,22 +151,22 @@
 }
 
 .btn-primary {
-  background-color: #4CAF50;
+  background-color: #26a69a;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #45a049;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  background-color: #26a69a;
+  box-shadow: 0 2px 8px rgba(38, 166, 154, 0.3);
 }
 
 .btn-danger {
-  background: #f44336;
+  background: #ff0000;
   color: white;
 }
 
 .btn-danger:hover {
-  background: #d32f2f;
+  background: #d90000;
 }
 
 .modal-footer {

@@ -96,7 +96,7 @@
 
 .add-content-btn {
   padding: 20px 40px;
-  background: #039be5;
+  background: #26a69a;
   color: white;
   border: none;
   border-radius: 8px;
@@ -106,7 +106,7 @@
 }
 
 .add-content-btn:hover {
-  background: #0288d1;
+  background: #26a69a;
 }
 
 .widget-loader {

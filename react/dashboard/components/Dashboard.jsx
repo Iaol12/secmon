@@ -375,13 +375,16 @@ const Dashboard = () => {
       </div>
 
       {isViewMode && (
-        <button 
-          className="show-header-fab"
-          onClick={() => setIsViewMode(false)}
-          title="Show Header"
-        >
-          ▼
-        </button>
+        <>
+          <div className="view-mode-hover-zone" aria-hidden="true"></div>
+          <button 
+            className="show-header-fab"
+            onClick={() => setIsViewMode(false)}
+            title="Show Header"
+          >
+            ▼
+          </button>
+        </>
       )}
 
       {!isViewMode && (

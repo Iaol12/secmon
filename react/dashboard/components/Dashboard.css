@@ -1,5 +1,13 @@
 /* Dashboard Container */
 .dashboard-container {
+  --header-gray-050: #f7f7f7;
+  --header-gray-100: #f2f2f2;
+  --header-gray-200: #eaeaea;
+  --header-gray-300: #d9d9d9;
+  --header-gray-600: #666;
+  --header-gray-800: #333;
+  --header-control-radius: 8px;
+  --header-control-border: 1px solid var(--header-gray-300);
   width: 100%;
   min-height: 100vh;
   background: #f5f5f5;
@@ -11,7 +19,7 @@
   background: white;
   padding: 20px 24px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--header-gray-300);
   margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
@@ -57,7 +65,7 @@
 .dashboard-select-label {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: var(--header-gray-800);
   white-space: nowrap;
 }
 
@@ -73,39 +81,41 @@
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  color: var(--header-gray-800);
+  background: var(--header-gray-050);
+  border: var(--header-control-border);
+  border-radius: var(--header-control-radius);
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .dashboard-tab:hover {
-  background: #e2e8f0;
-  color: #334155;
-  border-color: #cbd5e1;
+  background: var(--header-gray-100);
+  color: var(--header-gray-800);
+  border-color: var(--header-gray-300);
 }
 
 .dashboard-tab.active {
-  background: #2196F3;
-  color: white;
-  border-color: #1565C0;
+  background: #cdf4e5;
+  color: var(--header-gray-800);
+  border-color: #9fd6c3;
 }
 
 .add-dashboard-tab {
   padding: 8px 12px;
-  background: #4CAF50;
+  background: #26A69A;
   color: white;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  border: var(--header-control-border);
+  border-radius: var(--header-control-radius);
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
   font-size: 16px;
+  aspect-ratio: 5 / 3;
 }
 
 .add-dashboard-tab:hover {
-  background: #45a049;
+  background: #1f8f85;
 }
 
 /* Dashboard Actions */
@@ -120,12 +130,13 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
+  border: var(--header-control-border);
+  border-radius: var(--header-control-radius);
   font-size: 14px;
   font-weight: 500;
   color: white;
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 .dashboard-action-btn:hover {
@@ -133,22 +144,24 @@
 }
 
 .dashboard-action-btn.back-btn {
-  background: #6c757d;
+  background: var(--header-gray-100);
+  color: var(--header-gray-800);
 }
 
 .dashboard-action-btn.back-btn:hover {
-  background: #5a6268;
+  background: #e6e6e6;
 }
 
 .dashboard-action-btn.collapse-header-btn {
-  background: #FF9800;
+  background: var(--header-gray-100);
+  color: var(--header-gray-800);
   padding: 10px 12px;
   min-width: 44px;
   justify-content: center;
 }
 
 .dashboard-action-btn.collapse-header-btn:hover {
-  background: #F57C00;
+  background: #e6e6e6;
 }
 
 .collapse-arrow {
@@ -162,19 +175,19 @@
 }
 
 .dashboard-action-btn.update-btn {
-  background: #2196F3;
+  background: #ffa500;
 }
 
 .dashboard-action-btn.update-btn:hover {
-  background: #0b7dda;
+  background: #e69500;
 }
 
 .dashboard-action-btn.delete-btn {
-  background: #f44336;
+  background: #ff0000;
 }
 
 .dashboard-action-btn.delete-btn:hover {
-  background: #da190b;
+  background: #d90000;
 }
 
 /* Dashboard Grid */
@@ -222,21 +235,34 @@
 .add-widget-button {
   position: fixed;
   bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #4CAF50;
+  right: 24px;
+  left: auto;
+  transform: none;
+  background: #26A69A;
   color: white;
   border: none;
   border-radius: 50px;
-  padding: 14px 32px;
-  font-size: 16px;
+  padding: 10px 18px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   z-index: 100;
-  animation: widgetAppear 0.4s ease-out;
+  animation: widgetAppearRight 0.35s ease-out;
+  aspect-ratio: 5 / 3;
+}
+
+@keyframes widgetAppearRight {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes widgetAppear {
@@ -251,42 +277,61 @@
 }
 
 .add-widget-icon {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .add-widget-button:hover {
-  background: #45a049;
+  background: #1f8f85;
 }
 
 /* Show Header FAB */
+.view-mode-hover-zone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72px;
+  z-index: 109;
+}
+
 .show-header-fab {
   position: fixed;
   top: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(-8px);
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: #FF9800;
-  color: white;
+  background: var(--header-gray-100);
+  color: var(--header-gray-800);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   font-size: 20px;
-  animation: widgetAppear 0.3s ease-out;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 110;
 }
 
 .show-header-fab:hover {
-  background: #F57C00;
+  background: #e6e6e6;
+}
+
+.view-mode-hover-zone:hover + .show-header-fab,
+.show-header-fab:hover,
+.show-header-fab:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
 }
 
 .delete-confirm {
@@ -301,7 +346,7 @@
 }
 
 .btn-danger {
-  background-color: #f44336;
+  background-color: #ff0000;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -313,7 +358,7 @@
 }
 
 .btn-danger:hover {
-  background-color: #d32f2f;
+  background-color: #d90000;
 }
 
 /* Responsive styles removed */
