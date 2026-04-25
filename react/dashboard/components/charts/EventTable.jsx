@@ -59,7 +59,6 @@ const EventTable = ({
                 key={row.id || idx} 
                 className="event-table-row"
                 onClick={() => handleRowClick(row.id)}
-                style={{ cursor: 'pointer' }}
               >
                 {columns && columns.length > 0 && columns.map((column) => (
                   <td key={`${row.id || idx}-${column}`} className="event-table-cell">

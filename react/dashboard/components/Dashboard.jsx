@@ -115,11 +115,6 @@ const Dashboard = () => {
         };
     }, [debouncedSaveLayout]);
 
-  const handleDashboardChange = (e) => {
-    const newDashboardId = parseInt(e.target.value);
-    setCurrentDashboardId(newDashboardId);
-  };
-
   const handleCreateDashboard = () => {
     setModalState({
       isOpen: true,
@@ -408,7 +403,7 @@ const Dashboard = () => {
 
       {deleteConfirmOpen && (
         <div className="modal-overlay" onClick={() => setDeleteConfirmOpen(false)}>
-          <div className="modal-content delete-confirm" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content dashboard-modal-content delete-confirm" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Confirm Delete</h2>
               <button className="modal-close-btn" onClick={() => setDeleteConfirmOpen(false)}>

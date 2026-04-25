@@ -59,7 +59,7 @@ const WidgetSettings = ({ widget, config, onSave, onDelete, onClose }) => {
       onMouseDown={handleOverlayMouseDown}
       onClick={handleOverlayClick}
     >
-      <div className={`modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content widget-settings-modal-content ${isChartSelected ? 'expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4>{formData.title || 'Widget'} - Options</h4>
           <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">

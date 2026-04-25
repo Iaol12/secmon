@@ -92,7 +92,7 @@ const DashboardModal = ({ isOpen, onClose, onSubmit, dashboard, mode }) => {
       onMouseDown={handleOverlayMouseDown}
       onClick={handleOverlayClick}
     >
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content dashboard-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{modalTitle}</h2>
           <button className="modal-close-btn" onClick={handleClose}>

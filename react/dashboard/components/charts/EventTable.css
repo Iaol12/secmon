@@ -36,6 +36,7 @@
 
 .event-table-row {
   border-bottom: 1px solid #e8e8e8;
+  cursor: pointer;
 }
 
 .event-table-row:hover {
@@ -101,5 +102,3 @@
   color: #666;
   white-space: nowrap;
 }
-
-/* Responsive styles removed */
