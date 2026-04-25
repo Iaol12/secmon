@@ -53,12 +53,10 @@ class ChartDataService
     public function getFilteredEventsLineChart($filterId, $timeframe = null, $lastId = null)
     {
         $granularity = $this->resolveGranularityForTimeframe($timeframe);
-        $range = !empty($timeframe) ? $this->parseTimeframeToDateInterval($timeframe) : 'P1W';
         $interval = new \DateInterval($this->parseGranularityToDateInterval($granularity));
         $sqlGroupingFormat = $this->getSqlGroupingFormat($granularity);
 
-        $startDate = $this->getBratislavaNow();
-        $startDate->sub(new \DateInterval($range));
+        $startDate = $this->resolveTimeframeStartDate($timeframe);
         $startDateString = $startDate->format('Y-m-d H:i:s');
 
         $query = SecurityEvents::find()
@@ -195,9 +193,23 @@ class ChartDataService
             return;
         }
 
-        $startDate = $this->getBratislavaNow();
-        $startDate->sub(new \DateInterval($this->parseTimeframeToDateInterval($timeframe)));
+        $startDate = $this->resolveTimeframeStartDate($timeframe);
         $query->andWhere(['>=', 'datetime', $startDate->format('Y-m-d H:i:s')]);
+    }
+
+    private function resolveTimeframeStartDate(?string $timeframe): \DateTime
+    {
+        $startDate = $this->getBratislavaNow();
+
+        if (!empty($timeframe)) {
+            $startDate->sub(new \DateInterval($this->parseTimeframeToDateInterval($timeframe)));
+        } else {
+            $startDate->sub(new \DateInterval('P1W'));
+        }
+
+        $startDate->setTime((int) $startDate->format('H'), 0, 0);
+
+        return $startDate;
     }
 
     public function getLatestFilteredEventId($filterId, $timeframe = null): int
