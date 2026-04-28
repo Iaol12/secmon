@@ -1,8 +1,9 @@
 FROM yiisoftware/yii2-php:8.2-apache
 
 ARG DEBIAN_FRONTEND=noninteractive
+ENV XZ_OPT="--no-adjust"
+ENV XZ_DEFAULTS="--no-sandbox"
 
-# Update system
 RUN apt-get update
 
 # Install useful packages
